@@ -68,7 +68,7 @@
 #define MAXPACK		23
 #define MAXTRAPS	10
 #define AMULETLEVEL	26
-#define	NUMTHINGS	7	/* number of types of things */
+#define	NUMTHINGS	11	/* number of types of things */
 #define MAXPASS		13	/* upper limit on number of passages */
 #define MAXNAME		20  /* Maximum Length of a scroll */
 #define MAXITEMS	83  /* Maximum number of randomly generated things */
@@ -101,6 +101,7 @@
 #define detach(a,b)	list_detach(&a,b)
 #define free_list(a)	list_free(&a)
 #define max(a,b)	((a) > (b) ? (a) : (b))
+#define min(a,b)	((a) < (b) ? (a) : (b))
 #define on(thing,flag)	(((thing).t_flags & (flag)) != 0)
 #define GOLDCALC	(rnd(50 + 10 * level) + 2)
 #define ISRING(h,r)	(cur_ring[h] != NULL && cur_ring[h]->o_which == r)
@@ -270,6 +271,10 @@
 #define BANDED_MAIL	6
 #define PLATE_MAIL	7
 #define MAXARMORS	8
+#define MAXHELMETS	4
+#define MAXGLOVES	3
+#define MAXBOOTS	3
+#define MAXSHIELDS	3
 
 /*
  * Ring types
@@ -484,13 +489,16 @@ bool wizard;
 
 extern bool p_know[], r_know[], s_know[], ws_know[];
 
-extern char *a_names[], *flashmsg, *he_man[], huh[],
+extern char *a_names[], *h_names[], *g_names[], *b_names[], *sh_names[],
+		*flashmsg, *he_man[], huh[],
 		*intense, *p_colors[], *r_stones[], runch, *typebuf, take,
 		*w_names[], *ws_made[], *ws_type[];
 
 extern struct h_list helpcoms[], helpobjs[];
 
-extern int	a_chances[], a_class[], count, dnum, food_left,
+extern int	a_chances[], a_class[], h_chances[], h_class[],
+		g_chances[], g_class[], b_chances[], b_class[],
+		sh_chances[], sh_class[], count, dnum, food_left,
 		fung_hit, group, hungry_state, inpack,
 		level, max_level, mpos, no_command, no_food, no_move,
 		ntraps, purse, quiet, total;
@@ -505,6 +513,7 @@ extern char *_whoami;  //@ defined (no value set) but seems unused
 extern int cksum;
 
 extern THING *cur_armor, *cur_ring[], *cur_weapon,
+		*cur_helmet, *cur_gloves, *cur_boots, *cur_shield,
 		*lvl_obj, *mlist, player;
 
 extern coord	delta, oldpos;
@@ -572,6 +581,8 @@ extern int no_step;  //@ used in clock(), originally set by dos.asm
 //@ armor.c
 void	wear(void);
 void	take_off(void);
+void	unequip(void);
+void	update_armor_class(void);
 void	waste_time(void);
 
 //@ chase.c

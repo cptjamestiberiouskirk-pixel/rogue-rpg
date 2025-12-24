@@ -207,6 +207,7 @@ execcom()
 		when 'w': wield();
 		when 'W': wear();
 		when 'T': take_off();
+		when 'V': unequip();
 		when 'P': ring_on();
 		when 'R': ring_off();
 		when 'c': after = FALSE; call();

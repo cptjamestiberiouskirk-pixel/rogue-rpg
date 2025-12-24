@@ -102,6 +102,10 @@
 #define AMULET		(0x0c)
 #define RING		(0x09)
 #define WEAPON		(0x18)
+#define HELMET		(0x19)
+#define GLOVES		(0x1a)
+#define BOOTS		(0x1b)
+#define SHIELD		(0x1c)
 #define CALLABLE	-1
 
 #define VWALL	(0xba)

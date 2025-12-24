@@ -48,6 +48,31 @@ char *a_names[MAXARMORS] = {		/* Names of armor types */
 	"plate mail"
 };
 
+char *h_names[MAXHELMETS] = {		/* Names of helmet types */
+	"leather helmet",
+	"iron helmet",
+	"steel helmet",
+	"mithril helmet"
+};
+
+char *g_names[MAXGLOVES] = {		/* Names of gloves types */
+	"leather gloves",
+	"iron gloves",
+	"gauntlets"
+};
+
+char *b_names[MAXBOOTS] = {		/* Names of boots types */
+	"leather boots",
+	"iron boots",
+	"steel boots"
+};
+
+char *sh_names[MAXSHIELDS] = {		/* Names of shield types */
+	"small shield",
+	"large shield",
+	"tower shield"
+};
+
 int a_chances[MAXARMORS] = {		/* Chance for each armor type */
 	20,
 	35,
@@ -56,6 +81,27 @@ int a_chances[MAXARMORS] = {		/* Chance for each armor type */
 	75,
 	85,
 	95,
+	100
+};
+int h_chances[MAXHELMETS] = {		/* Chance for each helmet type */
+	50,
+	75,
+	95,
+	100
+};
+int g_chances[MAXGLOVES] = {		/* Chance for each gloves type */
+	50,
+	85,
+	100
+};
+int b_chances[MAXBOOTS] = {		/* Chance for each boots type */
+	50,
+	85,
+	100
+};
+int sh_chances[MAXSHIELDS] = {		/* Chance for each shield type */
+	50,
+	85,
 	100
 };
 int a_class[MAXARMORS] = {		/* Armor class for each armor type */
@@ -67,6 +113,27 @@ int a_class[MAXARMORS] = {		/* Armor class for each armor type */
 	4,
 	4,
 	3
+};
+int h_class[MAXHELMETS] = {		/* Armor class for each helmet type */
+	9,
+	8,
+	7,
+	6
+};
+int g_class[MAXGLOVES] = {		/* Armor class for each gloves type */
+	10,
+	9,
+	8
+};
+int b_class[MAXBOOTS] = {		/* Armor class for each boots type */
+	10,
+	9,
+	8
+};
+int sh_class[MAXSHIELDS] = {		/* Armor class for each shield type */
+	9,
+	8,
+	7
 };
 
 struct magic_item s_magic[MAXSCROLLS] = {
@@ -201,6 +268,7 @@ struct h_list helpcoms[] = {
 	H_STR("N      run down & right"),
 	H_STR("U      run up & right"),
 	H_STR("Y      run up & left"),
+	H_STR("V      unequip item"),
 	H_STR("W      wear armor"),
 	H_STR("T      take armor off"),
 	H_STR("P      put on ring"),
@@ -377,6 +445,10 @@ coord delta;				/* Change indicated to get_dir() */
 THING *cur_armor;			/* What a well dresssed rogue wears */
 THING *cur_ring[2];			/* Which rings are being worn */
 THING *cur_weapon;			/* Which weapon he is weilding */
+THING *cur_helmet;			/* Helmet worn */
+THING *cur_gloves;			/* Gloves worn */
+THING *cur_boots;			/* Boots worn */
+THING *cur_shield;			/* Shield worn */
 
 struct room *oldrp;			/* Roomin(&oldpos) */
 struct room rooms[MAXROOMS];		/* One for each room -- A level */
@@ -470,7 +542,11 @@ struct magic_item things[NUMTHINGS] = {
 	{ 0,			 8, ___ },	/* weapon */
 	{ 0,			 8, ___ },	/* armor */
 	{ 0,			 5, ___ },	/* ring */
-	{ 0,			 5, ___ }	/* stick */
+	{ 0,			 5, ___ },	/* stick */
+	{ 0,			 4, ___ },	/* helmet */
+	{ 0,			 4, ___ },	/* gloves */
+	{ 0,			 4, ___ },	/* boots */
+	{ 0,			 4, ___ }	/* shield */
 };
 #undef ___
 

@@ -355,16 +355,11 @@ status(void)
 	/*
 	 * Armor:
 	 */
-	if(s_ac != (cur_armor != NULL ? cur_armor->o_ac : pstats.s_arm))
+	if(s_ac != pstats.s_arm)
 	{
-		s_ac = (cur_armor != NULL ? cur_armor->o_ac : pstats.s_arm);
-		if (ISRING(LEFT,R_PROTECT))
-			s_ac -= cur_ring[LEFT]->o_ac;
-		if (ISRING(RIGHT,R_PROTECT))
-			s_ac -= cur_ring[RIGHT]->o_ac;
+		s_ac = pstats.s_arm;
 		move(23,PT(12,52));
-		printw("Armor:%-2d",
-		AC(cur_armor != NULL ? cur_armor->o_ac : pstats.s_arm));
+		printw("Armor:%-2d", AC(pstats.s_arm));
 	}
 
 	/*

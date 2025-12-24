@@ -412,7 +412,8 @@ is_current(obj)
 	if (obj == NULL)
 		return FALSE;
 	if (obj == cur_armor || obj == cur_weapon || obj == cur_ring[LEFT]
-		|| obj == cur_ring[RIGHT]) {
+		|| obj == cur_ring[RIGHT] || obj == cur_helmet || obj == cur_gloves
+		|| obj == cur_boots || obj == cur_shield) {
 		msg("That's already in use");
 		return TRUE;
 	}

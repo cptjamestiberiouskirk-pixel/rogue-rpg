@@ -103,6 +103,34 @@ inv_name(THING *obj, bool drop)
 				a_names[which], -(obj->o_ac-11));
 		else
 			sprintf(pb, "%s", a_names[which]);
+	when HELMET:
+		if (obj->o_flags & ISKNOW)
+			chopmsg(pb, "%s %s","%s %s [armor class %d]",
+				num(h_class[which] - obj->o_ac, 0, HELMET),
+				h_names[which], -(obj->o_ac-11));
+		else
+			sprintf(pb, "%s", h_names[which]);
+	when GLOVES:
+		if (obj->o_flags & ISKNOW)
+			chopmsg(pb, "%s %s","%s %s [armor class %d]",
+				num(g_class[which] - obj->o_ac, 0, GLOVES),
+				g_names[which], -(obj->o_ac-11));
+		else
+			sprintf(pb, "%s", g_names[which]);
+	when BOOTS:
+		if (obj->o_flags & ISKNOW)
+			chopmsg(pb, "%s %s","%s %s [armor class %d]",
+				num(b_class[which] - obj->o_ac, 0, BOOTS),
+				b_names[which], -(obj->o_ac-11));
+		else
+			sprintf(pb, "%s", b_names[which]);
+	when SHIELD:
+		if (obj->o_flags & ISKNOW)
+			chopmsg(pb, "%s %s","%s %s [armor class %d]",
+				num(sh_class[which] - obj->o_ac, 0, SHIELD),
+				sh_names[which], -(obj->o_ac-11));
+		else
+			sprintf(pb, "%s", sh_names[which]);
 	when AMULET:
 		strcpy(pb, "The Amulet of Yendor");
 	when STICK:
@@ -141,6 +169,14 @@ inv_name(THING *obj, bool drop)
 		strcat(pb, " (being worn)");
 	if (obj == cur_weapon)
 		strcat(pb, " (weapon in hand)");
+	if (obj == cur_helmet)
+		strcat(pb, " (on head)");
+	if (obj == cur_gloves)
+		strcat(pb, " (on hands)");
+	if (obj == cur_boots)
+		strcat(pb, " (on feet)");
+	if (obj == cur_shield)
+		strcat(pb, " (in off hand)");
 	if (obj == cur_ring[LEFT])
 		strcat(pb, " (on left hand)");
 	else if (obj == cur_ring[RIGHT])
@@ -225,7 +261,8 @@ can_drop(THING *op)
 	if (op == NULL)
 		return TRUE;
 	if (op != cur_armor && op != cur_weapon
-		&& op != cur_ring[LEFT] && op != cur_ring[RIGHT])
+		&& op != cur_ring[LEFT] && op != cur_ring[RIGHT]
+		&& op != cur_helmet && op != cur_gloves && op != cur_boots && op != cur_shield)
 		return TRUE;
 	if (op->o_flags & ISCURSED) {
 		msg("you can't.  It appears to be cursed");
@@ -236,7 +273,15 @@ can_drop(THING *op)
 	else if (op == cur_armor) {
 		waste_time();
 		cur_armor = NULL;
-	} else {
+	} else if (op == cur_helmet)
+		cur_helmet = NULL;
+	else if (op == cur_gloves)
+		cur_gloves = NULL;
+	else if (op == cur_boots)
+		cur_boots = NULL;
+	else if (op == cur_shield)
+		cur_shield = NULL;
+	else {
 		register int hand;
 
 		if (op != cur_ring[hand = LEFT])
@@ -257,6 +302,7 @@ can_drop(THING *op)
 			break;
 		}
 	}
+	update_armor_class();
 	return TRUE;
 }
 
@@ -353,6 +399,62 @@ new_thing(void)
 		cur->o_type = STICK;
 		cur->o_which = pick_one(ws_magic, MAXSTICKS);
 		fix_stick(cur);
+	when 7:
+		cur->o_type = HELMET;
+		for (j = 0, k = rnd(100); j < MAXHELMETS; j++)
+			if (k < h_chances[j])
+				break;
+		cur->o_which = j;
+		cur->o_ac = h_class[j];
+		if ((k = rnd(100)) < 20)
+		{
+			cur->o_flags |= ISCURSED;
+			cur->o_ac += rnd(3) + 1;
+		}
+		else if (k < 28)
+			cur->o_ac -= rnd(3) + 1;
+	when 8:
+		cur->o_type = GLOVES;
+		for (j = 0, k = rnd(100); j < MAXGLOVES; j++)
+			if (k < g_chances[j])
+				break;
+		cur->o_which = j;
+		cur->o_ac = g_class[j];
+		if ((k = rnd(100)) < 20)
+		{
+			cur->o_flags |= ISCURSED;
+			cur->o_ac += rnd(3) + 1;
+		}
+		else if (k < 28)
+			cur->o_ac -= rnd(3) + 1;
+	when 9:
+		cur->o_type = BOOTS;
+		for (j = 0, k = rnd(100); j < MAXBOOTS; j++)
+			if (k < b_chances[j])
+				break;
+		cur->o_which = j;
+		cur->o_ac = b_class[j];
+		if ((k = rnd(100)) < 20)
+		{
+			cur->o_flags |= ISCURSED;
+			cur->o_ac += rnd(3) + 1;
+		}
+		else if (k < 28)
+			cur->o_ac -= rnd(3) + 1;
+	when 10:
+		cur->o_type = SHIELD;
+		for (j = 0, k = rnd(100); j < MAXSHIELDS; j++)
+			if (k < sh_chances[j])
+				break;
+		cur->o_which = j;
+		cur->o_ac = sh_class[j];
+		if ((k = rnd(100)) < 20)
+		{
+			cur->o_flags |= ISCURSED;
+			cur->o_ac += rnd(3) + 1;
+		}
+		else if (k < 28)
+			cur->o_ac -= rnd(3) + 1;
 #ifdef DEBUG
 	otherwise:
 		debug("Picked a bad kind of object");
