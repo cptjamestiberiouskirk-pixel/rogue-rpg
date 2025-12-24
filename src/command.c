@@ -258,6 +258,31 @@ execcom()
 #ifdef WIZARD
 		when 'C': after = FALSE; create_obj();
 #endif
+		when CTRL('B'): after = FALSE; {
+			THING *tp = new_item();
+			coord cp;
+			cp.y = hero.y + rnd(3) - 1;
+			cp.x = hero.x + rnd(3) - 1;
+			if (cp.y < 0 || cp.y >= LINES || cp.x < 0 || cp.x >= COLS || !step_ok(winat(cp.y, cp.x))) {
+				cp.y = hero.y;
+				cp.x = hero.x;
+			}
+			new_monster(tp, randmonster(TRUE), &cp);
+			tp->t_rarity = LEGENDARY;
+			tp->t_stats.s_maxhp *= 3;
+			tp->t_stats.s_hpt = tp->t_stats.s_maxhp;
+			tp->t_stats.s_str += 5;
+			tp->t_stats.s_exp *= 5;
+			tp->t_flags |= ISMEAN;
+			msg("A legendary boss appears!");
+		}
+		when CTRL('I'): after = FALSE; {
+			THING *obj;
+			for (obj = pack; obj != NULL; obj = next(obj)) {
+				obj->_o._o_flags |= ISKNOW;
+			}
+			msg("All items identified!");
+		}
 		otherwise:
 			after = FALSE;
 			save_msg = FALSE;

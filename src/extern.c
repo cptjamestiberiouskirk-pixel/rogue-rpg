@@ -19,6 +19,7 @@ int is_com;
  */
 int revno = REV;
 int verno = VER;
+int save_version = 2;  /* Increment for new THING fields */
 
 /*
  * All this should be low as possible in memory so that
@@ -208,6 +209,9 @@ struct magic_item ws_magic[MAXSTICKS] = {
 	{ "teleport to",		 5,  50 },
 	{ "cancellation",		 5, 280 }
 };
+
+extern struct Affix prefixes[];
+extern struct Affix suffixes[];
 
 #ifdef HELP
 /*@

@@ -228,6 +228,27 @@ static char *metal[] = {
 #define NMETAL (sizeof metal / sizeof (char *))
 
 /*
+ * Affix tables for Diablo-style loot system
+ */
+struct Affix prefixes[] = {
+    { "None", MOD_NONE, 0, 0 },
+    { "Rusty", MOD_DMG, -3, -1 },
+    { "Polished", MOD_HIT, 1, 3 },
+    { "Vicious", MOD_DMG, 2, 5 },
+    { "Heavy", MOD_STR, 1, 2 },
+    { "Jagged", MOD_DMG, 1, 3 }
+};
+
+struct Affix suffixes[] = {
+    { "None", MOD_NONE, 0, 0 },
+    { "of Weakness", MOD_STR, -2, -1 },
+    { "of Accuracy", MOD_HIT, 2, 4 },
+    { "of the Bear", MOD_HP, 5, 15 },
+    { "of Power", MOD_STR, 2, 3 },
+    { "of Killing", MOD_DMG, 3, 6 }
+};
+
+/*
  * init_things
  *	Initialize the probabilities for types of things
  */

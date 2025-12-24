@@ -82,6 +82,21 @@ new_monster(THING *tp, byte type, coord *cp)
 	tp->t_flags = mp->m_flags;
 	tp->t_turn = TRUE;
 	tp->t_pack = NULL;
+	tp->t_rarity = COMMON; // Default
+	
+	// 5% chance for a Boss (Rare), but only on deeper levels
+	if (level > 3 && rnd(100) < 5) {
+		tp->t_rarity = RARE;
+		
+		// BUFF STATS for the Boss
+		tp->t_stats.s_maxhp *= 2;      // Double HP
+		tp->t_stats.s_hpt = tp->t_stats.s_maxhp;
+		tp->t_stats.s_str += 3;        // Stronger
+		tp->t_stats.s_exp *= 3;        // More XP
+		
+		// Optional: Make them mean so they chase you
+		tp->t_flags |= ISMEAN; 
+	}
 	if (ISWEARING(R_AGGR))
 		start_run(cp);
 	if (type == 'F')

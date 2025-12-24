@@ -14,6 +14,8 @@
 #include "rogue.h"
 #include "curses.h"
 
+extern int save_version;
+
 /*@
  * Addresses used to save and restore statically sized global vars.
  * Changed from char to actual pointers, so we can set to a dummy address
@@ -246,6 +248,10 @@ rok:
 	{
 		fclose(file);
 		md_exit(EXIT_FAILURE);
+	}
+	if (save_version < 2) {
+		fclose(file);
+		fatal("Save file is from an older version. Please start a new game.\n");
 	}
 
 	oldcols = COLS;

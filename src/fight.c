@@ -674,6 +674,26 @@ killed(THING *tp, bool pr)
 		attach(tp->t_pack, gold);
 		break;
 	}
+	// Check if the dying monster was a Boss (RARE)
+	if (tp->t_rarity >= RARE) {
+		// Create a reward item
+		THING *reward = new_thing();
+		
+		if (reward != NULL) {
+			// Force the reward to match the monster's rarity (or better)
+			reward->o_rarity = tp->t_rarity;
+			
+			// Re-roll the stats/affixes to match this new rarity
+			// (Pass 'level + 5' to make the loot slightly better than current depth)
+			apply_diablo_stats(reward, level + 5);
+			
+			// Add to monster's pack. 
+			// 'remove_monster' calls 'fall()', which will drop everything in the pack.
+			attach(tp->t_pack, reward);
+			
+			msg("The Elite monster drops a heavy sack!");
+		}
+	}
 	/*
 	 * Get rid of the monster.
 	 */

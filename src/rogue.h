@@ -71,6 +71,7 @@
 #define	NUMTHINGS	11	/* number of types of things */
 #define MAXPASS		13	/* upper limit on number of passages */
 #define MAXNAME		20  /* Maximum Length of a scroll */
+#define MAXSTR		128 /* Standard buffer size for string operations */
 #define MAXITEMS	83  /* Maximum number of randomly generated things */
 #define BUFSIZE		128 /*@ moved from curses.h */
 
@@ -316,6 +317,34 @@
 #define MAXSTICKS	14
 
 /*
+ * Affix system for Diablo-style loot
+ */
+enum AffixType {
+    MOD_NONE,
+    MOD_STR,    // Strength
+    MOD_DMG,    // Damage bonus
+    MOD_HIT,    // Hit bonus
+    MOD_HP      // Max HP
+};
+
+struct Affix {
+    char *name;
+    enum AffixType type;
+    int min_val;
+    int max_val;
+};
+
+/*
+ * Item rarity for Diablo-style loot system
+ */
+typedef enum {
+    COMMON,
+    ITEM_MAGIC,
+    RARE,
+    LEGENDARY
+} ItemRarity;
+
+/*
  * Now we define the structures and types
  */
 
@@ -399,6 +428,7 @@ union thing {
 	struct stats _t_stats;		/* Physical description */
 	struct room *_t_room;		/* Current room for thing */
 	union thing *_t_pack;		/* What the thing is carrying */
+	ItemRarity _t_rarity;		/* Rarity level for bosses */
 	} _t;
 	struct {
 	union thing *_l_next, *_l_prev;	/* Next pointer in link */
@@ -416,6 +446,9 @@ union thing {
 	short _o_flags;			/* Information about objects */
 	char _o_enemy;			/* If it is enchanted, who it hates */
 	shint _o_group;			/* Group number for this object */
+	ItemRarity _o_rarity;		/* Rarity level (COMMON, MAGIC, etc.) */
+	int _o_prefix_id;		/* ID for prefix affix (0 = none) */
+	int _o_suffix_id;		/* ID for suffix affix (0 = none) */
 	} _o;
 };
 
@@ -433,6 +466,7 @@ typedef union thing THING;
 #define t_stats		_t._t_stats
 #define t_pack		_t._t_pack
 #define t_room		_t._t_room
+#define t_rarity	_t._t_rarity
 #define o_type		_o._o_type
 #define o_pos		_o._o_pos
 #define o_text		_o._o_text
@@ -449,6 +483,9 @@ typedef union thing THING;
 #define o_flags		_o._o_flags
 #define o_group		_o._o_group
 #define o_enemy		_o._o_enemy
+#define o_rarity	_o._o_rarity
+#define o_prefix_id	_o._o_prefix_id
+#define o_suffix_id	_o._o_suffix_id
 
 /*
  * Array containing information on all the various types of monsters
@@ -854,6 +891,7 @@ bool	can_drop(THING *op);
 THING	*new_thing(void);
 byte	add_line(char *use, char *fmt, char *arg);
 byte	end_line(char *use);
+void apply_diablo_stats(THING *obj, int d_level);
 
 //@ weapons.c
 void	missile(int ydelta, int xdelta);

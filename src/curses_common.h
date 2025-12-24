@@ -42,7 +42,7 @@
  * @ Heed the warning! 80 and 25 are hard coded in many places... sigh
  * @ moved from rogue.h
  */
-#define MAXSTR  	80	/* maximum length of strings */
+#define MAXSTR  	128	/* maximum length of strings */
 #define MAXLINES	25	/* maximum number of screen lines used */
 #define MAXCOLS 	80	/* maximum number of screen columns used */
 
@@ -78,6 +78,12 @@
 #define cur_standout() set_attr(14)  //@ black on normal white (reverse)
 #define high()         set_attr(15)  //@ bright white on color, normal on bw
 #define bold()         set_attr(16)  //@ black on normal white (reverse)
+
+//@ Rarity colors for Diablo-style loot system
+#define COLOR_COMMON    0   //@ normal
+#define COLOR_ITEM_MAGIC 13 //@ blue
+#define COLOR_RARE      11  //@ yellow
+#define COLOR_LEGENDARY 3   //@ red
 
 #define cur_getch()	cur_getch_timeout(-1)
 

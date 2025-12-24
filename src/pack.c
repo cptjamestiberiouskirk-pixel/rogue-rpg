@@ -254,8 +254,15 @@ inventory(THING *list, int type, char *lstr)
 		  !(type == STICK && list->o_enemy && list->o_charges))
 			continue;
 		n_objs++;
+		switch (list->o_rarity) {
+		    case COMMON: break;  /* default color */
+		    case ITEM_MAGIC: set_attr(COLOR_ITEM_MAGIC); break;
+		    case RARE: set_attr(COLOR_RARE); break;
+		    case LEGENDARY: set_attr(COLOR_LEGENDARY); break;
+		}
 		sprintf(inv_temp, "%c) %%s", ch);
 		add_line(lstr, inv_temp, inv_name(list, FALSE));
+		set_attr(0);  /* reset to normal */
 	}
 	if (n_objs == 0)
 	{

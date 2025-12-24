@@ -7,6 +7,13 @@
 
 #include "rogue.h"
 #include "curses.h"
+#include <string.h>
+
+extern struct Affix prefixes[];
+extern struct Affix suffixes[];
+
+#define NUM_PREFIXES 6  // Must match array size in init.c
+#define NUM_SUFFIXES 6  // Must match array size in init.c
 
 static void	chopmsg(char *s, char *shmsg, char *lnmsg, ...);
 static void	print_disc(byte type);
@@ -165,6 +172,15 @@ inv_name(THING *obj, bool drop)
 #endif
 		break;
 	}
+	if (obj->o_prefix_id > 0) {
+		char temp[MAXSTR];
+		strcpy(temp, prbuf);
+		sprintf(prbuf, "%s %s", prefixes[obj->o_prefix_id].name, temp);
+	}
+	if (obj->o_suffix_id > 0) {
+		strcat(prbuf, " ");
+		strcat(prbuf, suffixes[obj->o_suffix_id].name);
+	}
 	if (obj == cur_armor)
 		strcat(pb, " (being worn)");
 	if (obj == cur_weapon)
@@ -306,6 +322,40 @@ can_drop(THING *op)
 	return TRUE;
 }
 
+void apply_diablo_stats(THING *obj, int d_level) {
+    int roll = rnd(100); // 0-99
+    
+    // 1. Determine Rarity based on roll
+    if (roll < 60) {
+        obj->o_rarity = COMMON;
+    } else if (roll < 90) {
+        obj->o_rarity = ITEM_MAGIC;
+    } else if (roll < 99) {
+        obj->o_rarity = RARE;
+    } else {
+        obj->o_rarity = LEGENDARY; // 1% chance for Legendary
+    }
+    
+    // 2. Assign Affixes based on Rarity
+    // Common: No affixes
+    // Magic: 50% chance for Prefix, 50% for Suffix
+    // Rare/Legendary: Always has both (unique names for Legendary later)
+    
+    obj->o_prefix_id = 0; // Default to "None"
+    obj->o_suffix_id = 0; // Default to "None"
+
+    if (obj->o_rarity == ITEM_MAGIC) {
+        if (rnd(2) == 0) 
+            obj->o_prefix_id = (rnd(NUM_PREFIXES - 1)) + 1; // 1 to MAX
+        else 
+            obj->o_suffix_id = (rnd(NUM_SUFFIXES - 1)) + 1;
+    } 
+    else if (obj->o_rarity == RARE || obj->o_rarity == LEGENDARY) {
+        obj->o_prefix_id = (rnd(NUM_PREFIXES - 1)) + 1;
+        obj->o_suffix_id = (rnd(NUM_SUFFIXES - 1)) + 1;
+    }
+}
+
 /*
  * new_thing:
  *	Return a new thing
@@ -318,6 +368,7 @@ new_thing(void)
 
 	if ((cur = new_item()) == NULL)
 		return NULL;
+	memset(cur, 0, sizeof(THING));  /* Zero all fields to prevent uninitialized memory bugs */
 	cur->o_hplus = cur->o_dplus = 0;
 	cur->o_damage = cur->o_hurldmg = "0d0";
 	cur->o_ac = 11;
@@ -325,6 +376,9 @@ new_thing(void)
 	cur->o_group = 0;
 	cur->o_flags = 0;
 	cur->o_enemy = 0;
+	cur->o_rarity = COMMON;  /* Default to common */
+	cur->o_prefix_id = 0;    /* No prefix */
+	cur->o_suffix_id = 0;    /* No suffix */
 	/*
 	 * Decide what kind of object it will be
 	 * If we haven't had food for a while, let it be food.
@@ -348,6 +402,7 @@ new_thing(void)
 		cur->o_type = WEAPON;
 		cur->o_which = rnd(MAXWEAPONS);
 		init_weapon(cur, cur->o_which);
+		apply_diablo_stats(cur, level);
 		if ((k = rnd(100)) < 10)
 		{
 			cur->o_flags |= ISCURSED;
@@ -685,4 +740,11 @@ nothing(byte type)
 	}
 	sprintf(sp, " about any %ss", tystr);
 	return prbuf;
+}
+
+// Returns the calculated value for a specific affix (just uses average for now)
+int get_affix_value(struct Affix *table, int index) {
+    if (index <= 0) return 0; // 0 is always "None"
+    // Simple average for now. Later we can add RNG.
+    return (table[index].min_val + table[index].max_val) / 2;
 }
