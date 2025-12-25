@@ -63,10 +63,17 @@ create_graphics_window(void)
 	/* Clear window with black background */
 	SDL_SetRenderDrawColor(tileset_renderer, 0, 0, 0, 255);
 	SDL_RenderClear(tileset_renderer);
+	
+	/* Draw a test rectangle to verify rendering works */
+	SDL_Rect test_rect = {100, 100, 200, 100};
+	SDL_SetRenderDrawColor(tileset_renderer, 255, 0, 0, 255);  /* Red */
+	SDL_RenderFillRect(tileset_renderer, &test_rect);
+	
 	SDL_RenderPresent(tileset_renderer);
 
 	graphics_enabled = 1;
 	fprintf(stderr, "Graphics window created successfully: %dx%d\n", window_width, window_height);
+	fprintf(stderr, "tileset_renderer = %p, graphics_enabled = %d\n", (void*)tileset_renderer, graphics_enabled);
 	return 0;
 }
 
@@ -230,9 +237,14 @@ render_tile(int screen_x, int screen_y, int tile_col, int tile_row)
 {
 	SDL_Rect dst_rect;
 	Uint8 r, g, b;
+	static int draw_count = 0;
 
-	if (!tileset_renderer)
+	if (!tileset_renderer) {
+		if (draw_count == 0)
+			fprintf(stderr, "render_tile: tileset_renderer is NULL!\n");
+		draw_count++;
 		return;
+	}
 
 	dst_rect.x = screen_x;
 	dst_rect.y = screen_y;
@@ -257,6 +269,12 @@ render_tile(int screen_x, int screen_y, int tile_col, int tile_row)
 		r = 0; g = 0; b = 0;
 	}
 
+	if (draw_count < 5) {
+		fprintf(stderr, "Drawing rect at (%d,%d) size %dx%d color (%d,%d,%d)\n",
+			screen_x, screen_y, TILE_WIDTH, TILE_HEIGHT, r, g, b);
+		draw_count++;
+	}
+
 	SDL_SetRenderDrawColor(tileset_renderer, r, g, b, 255);
 	SDL_RenderFillRect(tileset_renderer, &dst_rect);
 
@@ -273,11 +291,24 @@ void
 render_dungeon_tile(int screen_x, int screen_y, char ch)
 {
 	int tile_col, tile_row;
+	static int render_count = 0;
 
 	if (!graphics_enabled)
 		return;
 
+	if (!tileset_renderer) {
+		if (render_count == 0)
+			fprintf(stderr, "render_dungeon_tile: tileset_renderer is NULL!\n");
+		render_count++;
+		return;
+	}
+
 	if (get_tile_index(ch, &tile_col, &tile_row) == 0) {
+		if (render_count < 10) {
+			fprintf(stderr, "Rendering tile '%c' at (%d,%d) -> tile (%d,%d)\n", 
+				ch, screen_x, screen_y, tile_col, tile_row);
+			render_count++;
+		}
 		render_tile(screen_x, screen_y, tile_col, tile_row);
 	}
 	/* If no tile mapping, ASCII rendering handles it */

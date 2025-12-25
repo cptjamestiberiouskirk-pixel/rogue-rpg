@@ -754,7 +754,12 @@ void
 cur_clear(void)
 {
 #ifdef ROGUE_GRAPHICS
+	static int clear_count = 0;
 	if (graphics_enabled && tileset_renderer) {
+		if (clear_count < 5) {
+			fprintf(stderr, "cur_clear: clearing graphics buffer (call %d)\n", clear_count);
+			clear_count++;
+		}
 		SDL_SetRenderDrawColor(tileset_renderer, 0, 0, 0, 255);
 		SDL_RenderClear(tileset_renderer);
 	}
@@ -854,6 +859,21 @@ cur_refresh(void)
 {
 #ifdef ROGUE_GRAPHICS
 	if (graphics_enabled && tileset_renderer) {
+		static int refresh_count = 0;
+		SDL_Event event;
+		
+		/* Process SDL events to keep window responsive */
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_QUIT) {
+				fprintf(stderr, "SDL window closed by user\n");
+				graphics_enabled = 0;
+			}
+		}
+		
+		if (refresh_count < 3) {
+			fprintf(stderr, "cur_refresh: presenting frame %d\n", refresh_count);
+			refresh_count++;
+		}
 		SDL_RenderPresent(tileset_renderer);
 	}
 #endif
@@ -916,6 +936,15 @@ cur_addch(byte chr)
 	int r, c;
 #endif
 	byte old_attr;
+	static int addch_count = 0;
+
+#ifdef ROGUE_GRAPHICS
+	if (addch_count < 10 && (chr == '#' || chr == '.' || chr == '+' || chr == '@')) {
+		fprintf(stderr, "cur_addch: chr='%c' at (%d,%d), graphics_enabled=%d, renderer=%p\n",
+			chr, graphics_cursor_col, graphics_cursor_row, graphics_enabled, (void*)tileset_renderer);
+		addch_count++;
+	}
+#endif
 
 	old_attr = ch_attr;
 
@@ -1502,8 +1531,17 @@ resize_screen()
 		}
 		else
 		{
+#ifdef ROGUE_GRAPHICS
+			/* In graphics builds, continue gracefully with current size */
+#ifdef ROGUE_DEBUG
+			printw("Warning: failed to resize terminal to %u x %u; continuing at %u x %u\n",
+				   cur_COLS, cur_LINES, COLS, LINES);
+#endif
+			/* Do not abort; terminal size is not critical for graphics */
+#else
 			fatal("Could not resize resize terminal to %u x %u\n",
 					cur_COLS, cur_LINES);
+#endif
 		}
 	}
 }
@@ -1739,12 +1777,23 @@ winit(void)
 	setenv("ESCDELAY", "25", FALSE);
 	initscr();
 	init_curses = TRUE;
+#ifdef ROGUE_GRAPHICS
+	/* In graphics builds, don’t abort on smaller terminals; SDL window handles rendering. */
+	if (!noscore && !graphics_enabled && ((LINES < cur_LINES) || (COLS < cur_COLS)))
+	{
+#ifdef ROGUE_DEBUG
+		printw("Warning: %u-column mode prefers %u x %u; terminal is %u x %u. Continuing...\n",
+			   cur_COLS, cur_COLS, cur_LINES, COLS, LINES);
+#endif
+	}
+#else
 	if (!noscore && ((LINES < cur_LINES) || (COLS < cur_COLS)))
 	{
 		fatal("%u-column mode requires at least a %u x %u screen\n"
 				"Your terminal size is %u x %u\n",
 				cur_COLS, cur_COLS, cur_LINES, COLS, LINES);
 	}
+#endif
 #ifdef ROGUE_DEBUG
 	printw("Real terminal size:  %3u x %3u\n", LINES, COLS);
 	printw("Setting up Rogue to: %3u x %3u\n", cur_LINES, cur_COLS);
