@@ -1,5 +1,6 @@
 /*
  * Graphics rendering implementation for RoguePC
+ * SDL2-based tile rendering system
  *
  * graphics.c
  */
@@ -13,8 +14,60 @@
 #include "graphics.h"
 
 int graphics_enabled = 0;
+SDL_Window *game_window = NULL;
 SDL_Texture *tileset_texture = NULL;
 SDL_Renderer *tileset_renderer = NULL;
+
+/*
+ * create_graphics_window: Initialize SDL window and renderer for graphics mode
+ * Called from main.c when -g flag is set
+ * Window size: 80 columns × 24 rows × 16px per tile
+ */
+int
+create_graphics_window(void)
+{
+	int window_width = 80 * TILE_WIDTH;    /* 1280px */
+	int window_height = 24 * TILE_HEIGHT;  /* 384px */
+
+	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+		fprintf(stderr, "Graphics: SDL initialization failed: %s\n", SDL_GetError());
+		return -1;
+	}
+
+	game_window = SDL_CreateWindow(
+		"RoguePC - Graphics Mode",
+		SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED,
+		window_width,
+		window_height,
+		SDL_WINDOW_SHOWN
+	);
+
+	if (!game_window) {
+		fprintf(stderr, "Graphics: Failed to create window: %s\n", SDL_GetError());
+		SDL_Quit();
+		return -1;
+	}
+
+	tileset_renderer = SDL_CreateRenderer(game_window, -1, 
+		SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+	if (!tileset_renderer) {
+		fprintf(stderr, "Graphics: Failed to create renderer: %s\n", SDL_GetError());
+		SDL_DestroyWindow(game_window);
+		game_window = NULL;
+		SDL_Quit();
+		return -1;
+	}
+
+	/* Clear window with black background */
+	SDL_SetRenderDrawColor(tileset_renderer, 0, 0, 0, 255);
+	SDL_RenderClear(tileset_renderer);
+	SDL_RenderPresent(tileset_renderer);
+
+	graphics_enabled = 1;
+	return 0;
+}
 
 /*
  * load_tileset: Create tileset texture from procedural tiles
@@ -112,7 +165,7 @@ load_tileset(SDL_Renderer *renderer, const char *filename)
 }
 
 /*
- * unload_tileset: Cleanup tileset resources
+ * unload_tileset: Cleanup tileset and SDL resources
  */
 void
 unload_tileset(void)
@@ -121,7 +174,15 @@ unload_tileset(void)
 		SDL_DestroyTexture(tileset_texture);
 		tileset_texture = NULL;
 	}
-	tileset_renderer = NULL;
+	if (tileset_renderer) {
+		SDL_DestroyRenderer(tileset_renderer);
+		tileset_renderer = NULL;
+	}
+	if (game_window) {
+		SDL_DestroyWindow(game_window);
+		game_window = NULL;
+	}
+	SDL_Quit();
 	graphics_enabled = 0;
 }
 

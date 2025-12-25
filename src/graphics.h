@@ -38,12 +38,14 @@
  * Graphics mode state
  */
 extern int graphics_enabled;
+extern SDL_Window *game_window;
 extern SDL_Texture *tileset_texture;
 extern SDL_Renderer *tileset_renderer;
 
 /*
  * Function prototypes
  */
+int  create_graphics_window(void);
 int  load_tileset(SDL_Renderer *renderer, const char *filename);
 void unload_tileset(void);
 int  get_tile_index(char ch, int *col, int *row);

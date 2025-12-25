@@ -846,6 +846,11 @@ real_rc(pn, rp,cp)
 void
 cur_refresh(void)
 {
+#ifdef ROGUE_GRAPHICS
+	if (graphics_enabled && tileset_renderer) {
+		SDL_RenderPresent(tileset_renderer);
+	}
+#endif
 #ifndef ROGUE_DOS_CURSES
 	wrefresh(stdscr);
 #endif

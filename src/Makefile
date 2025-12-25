@@ -73,7 +73,7 @@ ifdef ROGUE_GRAPHICS
 CFLAGS+=-DROGUE_GRAPHICS
 CFLAGS+=$(shell pkg-config sdl2 --cflags)
 LDLIBS+=$(shell pkg-config sdl2 --libs)
-GRAPHICS_OBJ=graphics.o
+GRAPHICS_OBJ=graphics.o display.o
 else
 GRAPHICS_OBJ=
 endif

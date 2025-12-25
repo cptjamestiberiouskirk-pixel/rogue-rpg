@@ -124,6 +124,17 @@ main(argc, argv)
 	if (savfile == 0) {
 		savfile = 0;
 		winit();
+
+#ifdef ROGUE_GRAPHICS
+		if (graphics_enabled) {
+			if (create_graphics_window() == 0) {
+				load_tileset(tileset_renderer, "assets/tilemap.bmp");
+			} else {
+				graphics_enabled = 0;  /* Fallback to ASCII if graphics init fails */
+			}
+		}
+#endif
+
 		credits();
 		if (dnum == 0)
 			dnum = srand();
