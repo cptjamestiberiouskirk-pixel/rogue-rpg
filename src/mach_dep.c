@@ -694,26 +694,37 @@ readchar()
 		cur_refresh();  //@ macros
 		return(*typebuf++);
 	}
-	/*
-	 * while there are no characters in the type ahead buffer
-	 * update the status line at the bottom of the screen
-	 */
+
 #ifdef ROGUE_GRAPHICS
-	/* Use SDL input when graphics enabled */
+	/*
+	 * BUG FIX: CRITICAL - Prioritize SDL input when graphics are enabled
+	 * Do NOT fall through to terminal input as it will block the event loop
+	 * and cause the SDL window to become unresponsive ("zombie window")
+	 */
 	if (graphics_enabled) {
+		/* SDL blocking input - pumps events internally */
 		SIG2();
 		cur_refresh();
 		xch = graphics_read_key();
-	} else
-#endif
-	{
-		do
-		{
-			SIG2();  /* Rogue spends a lot of time here @ you bet! */
-			cur_refresh();  //@ command input
-		}
-		while ((xch = getch_timeout(250)) == NOCHAR);
+		ch = xlate_ch(xch);
+		if (ch == ESCAPE)
+			count = 0;
+		return ch;
 	}
+#endif
+
+	/*
+	 * Terminal input path (ASCII mode only)
+	 * while there are no characters in the type ahead buffer
+	 * update the status line at the bottom of the screen
+	 */
+	do
+	{
+		SIG2();  /* Rogue spends a lot of time here @ you bet! */
+		cur_refresh();  //@ command input
+	}
+	while ((xch = getch_timeout(250)) == NOCHAR);
+	
 	ch = xlate_ch(xch);
 	if (ch == ESCAPE)
 		count = 0;

@@ -236,8 +236,8 @@ render_dungeon_tile(int screen_x, int screen_y, char ch)
  * x, y: character grid coordinates (not pixel coordinates)
  * c: ASCII character to draw (0-127)
  * 
- * BUG FIX #2: Explicitly set WHITE color before drawing
- * BUG FIX #3: Call SDL_RenderPresent to make text visible immediately
+ * BUG FIX: Corrected bit order - font8x8_basic uses MSB-first encoding
+ * (Bit 7 = leftmost pixel, Bit 0 = rightmost pixel)
  */
 void
 graphics_draw_char(int x, int y, char c)
@@ -265,7 +265,10 @@ graphics_draw_char(int x, int y, char c)
 	/* Draw 8x8 font scaled to 16x16 (2x scale) */
 	for (i = 0; i < 8; i++) {
 		for (j = 0; j < 8; j++) {
-			if (bitmap[i] & (1 << j)) {
+			/* BUG FIX: Read bits MSB-first (0x80 >> j) instead of LSB-first (1 << j)
+			 * Font bitmap encoding: Bit 7 = leftmost pixel, Bit 0 = rightmost pixel
+			 */
+			if (bitmap[i] & (0x80 >> j)) {
 				/* Draw 2x2 pixel block for better visibility */
 				SDL_RenderDrawPoint(tileset_renderer, screen_x + j * 2,     screen_y + i * 2);
 				SDL_RenderDrawPoint(tileset_renderer, screen_x + j * 2 + 1, screen_y + i * 2);
@@ -286,9 +289,7 @@ graphics_draw_char(int x, int y, char c)
  * graphics_read_key: Read keyboard input from SDL events
  * Returns: ASCII character code if key pressed
  * 
- * BUG FIX #1: Handle SDL_QUIT to prevent zombie window
- * BUG FIX #3: Handle SDL_WINDOWEVENT for window exposure/redraw
- * 
+ * Handles SDL_QUIT and SDL_WINDOWEVENT to prevent zombie window
  * Blocking behavior: Waits for key press (matches readchar() semantics)
  */
 int
@@ -301,11 +302,12 @@ graphics_read_key(void)
 
 	/* Blocking loop - wait for key press */
 	while (1) {
-		/* Poll events to keep window responsive */
-		if (SDL_PollEvent(&event)) {
+		/* BUG FIX: Use SDL_WaitEvent for proper blocking without CPU spin */
+		if (SDL_WaitEvent(&event)) {
 			switch (event.type) {
 			case SDL_QUIT:
-				/* BUG FIX: User closed window - exit gracefully */
+				/* User closed window - exit gracefully */
+				fprintf(stderr, "Graphics window closed by user\n");
 				SDL_Quit();
 				exit(0);
 				break;
@@ -351,11 +353,8 @@ graphics_read_key(void)
 				}
 				break;
 			}
-		} else {
-			/* Small delay to prevent 100% CPU usage */
-			SDL_Delay(10);
-		}
 	}
+}  /* end while(1) */
 }
 
 #endif /* ROGUE_GRAPHICS */
