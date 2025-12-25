@@ -13,21 +13,32 @@
 #include <SDL2/SDL.h>
 
 /*
- * Tile indices in tilemap.png (16px × 16px tiles, 12 cols × 11 rows)
+ * Tile indices in tilemap.bmp (16px × 16px tiles)
+ * Layout: 192x176 sprite sheet with 12 columns × 11 rows
  * Mapping: character → {col, row} in tileset
- * Each tile is followed by 1px spacing
  */
+
+/* Item Row (Row 0) */
+#define TILE_POTION_COL  1
+#define TILE_POTION_ROW  0
+#define TILE_SCROLL_COL  2
+#define TILE_SCROLL_ROW  0
+#define TILE_WEAPON_COL  4
+#define TILE_WEAPON_ROW  0
+#define TILE_STAIRS_COL  6
+#define TILE_STAIRS_ROW  0
+
+/* Environment */
+#define TILE_FLOOR_COL   0
+#define TILE_FLOOR_ROW   4
+#define TILE_DOOR_COL    4
+#define TILE_DOOR_ROW    6
 #define TILE_WALL_COL    5
 #define TILE_WALL_ROW    8
 
-#define TILE_FLOOR_COL   0
-#define TILE_FLOOR_ROW   4
-
-#define TILE_DOOR_COL    4
-#define TILE_DOOR_ROW    6
-
-#define TILE_PLAYER_COL  1
-#define TILE_PLAYER_ROW  8
+/* Actors */
+#define TILE_HERO_COL    1
+#define TILE_HERO_ROW    8
 
 #define TILE_WIDTH       16
 #define TILE_HEIGHT      16
@@ -51,6 +62,8 @@ void unload_tileset(void);
 int  get_tile_index(char ch, int *col, int *row);
 void render_tile(int screen_x, int screen_y, int tile_col, int tile_row);
 void render_dungeon_tile(int screen_x, int screen_y, char ch);
+void graphics_draw_char(int x, int y, char c);
+int  graphics_read_key(void);
 
 #endif /* ROGUE_GRAPHICS */
 

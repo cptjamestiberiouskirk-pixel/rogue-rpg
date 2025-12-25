@@ -12,6 +12,7 @@
 #include <string.h>
 #include <SDL2/SDL.h>
 #include "graphics.h"
+#include "font.h"
 
 int graphics_enabled = 0;
 SDL_Window *game_window = NULL;
@@ -63,101 +64,35 @@ create_graphics_window(void)
 	/* Clear window with black background */
 	SDL_SetRenderDrawColor(tileset_renderer, 0, 0, 0, 255);
 	SDL_RenderClear(tileset_renderer);
-	
-	/* Draw a test rectangle to verify rendering works */
-	SDL_Rect test_rect = {100, 100, 200, 100};
-	SDL_SetRenderDrawColor(tileset_renderer, 255, 0, 0, 255);  /* Red */
-	SDL_RenderFillRect(tileset_renderer, &test_rect);
-	
 	SDL_RenderPresent(tileset_renderer);
 
 	graphics_enabled = 1;
 	fprintf(stderr, "Graphics window created successfully: %dx%d\n", window_width, window_height);
-	fprintf(stderr, "tileset_renderer = %p, graphics_enabled = %d\n", (void*)tileset_renderer, graphics_enabled);
 	return 0;
 }
 
 /*
- * load_tileset: Create tileset texture from procedural tiles
+ * load_tileset: Load tileset texture from tilemap.bmp
  * Returns: 0 on success, -1 on failure
- * 
- * Note: Since standard image libraries are not reliably available,
- * this implementation creates tile textures procedurally from simple
- * colored rectangles. In production, tiles would be loaded from
- * tilemap.bmp via SDL_LoadBMP(filename).
  */
 int
 load_tileset(SDL_Renderer *renderer, const char *filename)
 {
 	SDL_Surface *surface;
-	Uint32 *pixels;
-	int pitch_pixels;
-	int i, j, tile_idx;
-	SDL_Color tile_colors[] = {
-		{100, 100, 100, 255},  /* Tile 0: gray floor */
-		{150, 150, 150, 255},  /* Tile 1: light gray wall */
-		{200, 100, 100, 255},  /* Tile 2: red player */
-		{100, 150, 100, 255},  /* Tile 3: green plant */
-		{200, 200, 100, 255},  /* Tile 4: yellow item */
-		{100, 100, 200, 255},  /* Tile 5: blue door */
-		{0, 0, 0, 255},        /* Tile 6: black empty */
-		{255, 255, 255, 255},  /* Tile 7: white border */
-		{50, 50, 50, 255}      /* Tile 8: dark wall */
-	};
-	int num_colors = sizeof(tile_colors) / sizeof(tile_colors[0]);
 
 	if (!renderer) {
-		fprintf(stderr, "Graphics renderer not initialized\n");
+		fprintf(stderr, "load_tileset: renderer is NULL\n");
 		return -1;
 	}
 
 	tileset_renderer = renderer;
 
-	/* Try loading from file first */
+	/* Load BMP file */
 	surface = SDL_LoadBMP(filename);
-	
-	if (surface) {
-		tileset_texture = SDL_CreateTextureFromSurface(renderer, surface);
-		SDL_FreeSurface(surface);
-		if (tileset_texture) {
-			return 0;
-		}
-	}
-
-	/* Fallback: Create procedural tileset (12x11 grid of 16x16 tiles) */
-	fprintf(stderr, "Creating procedural tileset (file '%s' not found)\n", filename);
-	
-	surface = SDL_CreateRGBSurface(0, 
-		TILEMAP_COLS * TILE_WIDTH + (TILEMAP_COLS - 1),
-		TILEMAP_ROWS * TILE_HEIGHT + (TILEMAP_ROWS - 1),
-		32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
-
 	if (!surface) {
-		fprintf(stderr, "Failed to create tile surface: %s\n", SDL_GetError());
+		fprintf(stderr, "Failed to load tileset from '%s': %s\n", 
+			filename, SDL_GetError());
 		return -1;
-	}
-
-	pixels = (Uint32 *)surface->pixels;
-	pitch_pixels = surface->pitch / sizeof(Uint32);
-
-	/* Fill surface with tiles */
-	for (i = 0; i < TILEMAP_ROWS; i++) {
-		for (j = 0; j < TILEMAP_COLS; j++) {
-			int base_x = j * (TILE_WIDTH + 1);
-			int base_y = i * (TILE_HEIGHT + 1);
-			tile_idx = (i * TILEMAP_COLS + j) % num_colors;
-			SDL_Color color = tile_colors[tile_idx];
-			Uint32 pixel = SDL_MapRGB(surface->format, color.r, color.g, color.b);
-
-			/* Draw tile rectangle */
-			for (int y = 0; y < TILE_HEIGHT; y++) {
-				for (int x = 0; x < TILE_WIDTH; x++) {
-					if (base_x + x < surface->w && base_y + y < surface->h) {
-						pixels[(base_y + y) * pitch_pixels + (base_x + x)] = pixel;
-					}
-				}
-			}
-		}
 	}
 
 	tileset_texture = SDL_CreateTextureFromSurface(renderer, surface);
@@ -168,7 +103,7 @@ load_tileset(SDL_Renderer *renderer, const char *filename)
 		return -1;
 	}
 
-	graphics_enabled = 1;
+	fprintf(stderr, "Tileset loaded successfully from '%s'\n", filename);
 	return 0;
 }
 
@@ -205,82 +140,73 @@ get_tile_index(char ch, int *col, int *row)
 		return -1;
 
 	switch (ch) {
-	case '#':  /* Wall */
-		*col = TILE_WALL_COL;
-		*row = TILE_WALL_ROW;
+	case '!':  /* Potion */
+		*col = TILE_POTION_COL;
+		*row = TILE_POTION_ROW;
+		return 0;
+	case '?':  /* Scroll */
+		*col = TILE_SCROLL_COL;
+		*row = TILE_SCROLL_ROW;
+		return 0;
+	case ')':  /* Weapon */
+		*col = TILE_WEAPON_COL;
+		*row = TILE_WEAPON_ROW;
+		return 0;
+	case '%':  /* Stairs */
+		*col = TILE_STAIRS_COL;
+		*row = TILE_STAIRS_ROW;
 		return 0;
 	case '.':  /* Floor */
 		*col = TILE_FLOOR_COL;
 		*row = TILE_FLOOR_ROW;
 		return 0;
+	case '#':  /* Wall */
+		*col = TILE_WALL_COL;
+		*row = TILE_WALL_ROW;
+		return 0;
 	case '+':  /* Door */
 		*col = TILE_DOOR_COL;
 		*row = TILE_DOOR_ROW;
 		return 0;
-	case '@':  /* Player */
-		*col = TILE_PLAYER_COL;
-		*row = TILE_PLAYER_ROW;
+	case '@':  /* Hero */
+		*col = TILE_HERO_COL;
+		*row = TILE_HERO_ROW;
 		return 0;
 	default:
-		/* Monsters and other entities: render as ASCII for now */
+		/* No tile mapping - fallback to ASCII */
 		return -1;
 	}
 }
 
 /*
- * render_tile: Draw a single tile to screen
- * screen_x, screen_y: destination in pixels
- * tile_col, tile_row: tile coordinates (for color selection)
+ * render_tile: Draw a single tile from sprite sheet to screen
+ * screen_x, screen_y: destination pixel coordinates on screen
+ * tile_col, tile_row: tile grid coordinates in tilemap.bmp
  */
 void
 render_tile(int screen_x, int screen_y, int tile_col, int tile_row)
 {
+	SDL_Rect src_rect;
 	SDL_Rect dst_rect;
-	Uint8 r, g, b;
-	static int draw_count = 0;
 
-	if (!tileset_renderer) {
-		if (draw_count == 0)
-			fprintf(stderr, "render_tile: tileset_renderer is NULL!\n");
-		draw_count++;
+	if (!tileset_renderer || !tileset_texture) {
 		return;
 	}
 
+	/* Source: The specific sprite on the sheet */
+	src_rect.x = tile_col * TILE_WIDTH;
+	src_rect.y = tile_row * TILE_HEIGHT;
+	src_rect.w = TILE_WIDTH;
+	src_rect.h = TILE_HEIGHT;
+
+	/* Destination: Where to draw on the screen */
 	dst_rect.x = screen_x;
 	dst_rect.y = screen_y;
 	dst_rect.w = TILE_WIDTH;
 	dst_rect.h = TILE_HEIGHT;
 
-	/* Determine color based on tile type */
-	if (tile_col == TILE_WALL_COL && tile_row == TILE_WALL_ROW) {
-		/* Wall: dark gray */
-		r = 64; g = 64; b = 64;
-	} else if (tile_col == TILE_FLOOR_COL && tile_row == TILE_FLOOR_ROW) {
-		/* Floor: tan/beige */
-		r = 200; g = 190; b = 170;
-	} else if (tile_col == TILE_DOOR_COL && tile_row == TILE_DOOR_ROW) {
-		/* Door: brown */
-		r = 139; g = 69; b = 19;
-	} else if (tile_col == TILE_PLAYER_COL && tile_row == TILE_PLAYER_ROW) {
-		/* Player: bright yellow */
-		r = 255; g = 255; b = 0;
-	} else {
-		/* Default: dark background */
-		r = 0; g = 0; b = 0;
-	}
-
-	if (draw_count < 5) {
-		fprintf(stderr, "Drawing rect at (%d,%d) size %dx%d color (%d,%d,%d)\n",
-			screen_x, screen_y, TILE_WIDTH, TILE_HEIGHT, r, g, b);
-		draw_count++;
-	}
-
-	SDL_SetRenderDrawColor(tileset_renderer, r, g, b, 255);
-	SDL_RenderFillRect(tileset_renderer, &dst_rect);
-
-	/* Draw border for visibility */
-	SDL_SetRenderDrawColor(tileset_renderer, 128, 128, 128, 255);
-	SDL_RenderDrawRect(tileset_renderer, &dst_rect);
+	/* Render */
+	SDL_RenderCopy(tileset_renderer, tileset_texture, &src_rect, &dst_rect);
 }
 
 /*
@@ -291,27 +217,145 @@ void
 render_dungeon_tile(int screen_x, int screen_y, char ch)
 {
 	int tile_col, tile_row;
-	static int render_count = 0;
 
 	if (!graphics_enabled)
 		return;
 
-	if (!tileset_renderer) {
-		if (render_count == 0)
-			fprintf(stderr, "render_dungeon_tile: tileset_renderer is NULL!\n");
-		render_count++;
+	if (!tileset_renderer || !tileset_texture)
 		return;
-	}
 
+	/* Try to get sprite coordinates */
 	if (get_tile_index(ch, &tile_col, &tile_row) == 0) {
-		if (render_count < 10) {
-			fprintf(stderr, "Rendering tile '%c' at (%d,%d) -> tile (%d,%d)\n", 
-				ch, screen_x, screen_y, tile_col, tile_row);
-			render_count++;
-		}
 		render_tile(screen_x, screen_y, tile_col, tile_row);
 	}
-	/* If no tile mapping, ASCII rendering handles it */
+	/* If no tile mapping, ASCII rendering in curses.c handles it */
+}
+
+/*
+ * graphics_draw_char: Render an 8x8 character scaled to 16x16 pixels
+ * x, y: character grid coordinates (not pixel coordinates)
+ * c: ASCII character to draw (0-127)
+ * 
+ * BUG FIX #2: Explicitly set WHITE color before drawing
+ * BUG FIX #3: Call SDL_RenderPresent to make text visible immediately
+ */
+void
+graphics_draw_char(int x, int y, char c)
+{
+	int i, j;
+	const unsigned char *bitmap;
+	int screen_x, screen_y;
+
+	if (!tileset_renderer)
+		return;
+
+	/* Clamp character to valid ASCII range */
+	c = (unsigned char)c & 0x7F;
+
+	/* Get bitmap from font.h */
+	bitmap = font8x8_basic[(unsigned char)c];
+
+	/* Convert character grid position to pixel coordinates */
+	screen_x = x * TILE_WIDTH;
+	screen_y = y * TILE_HEIGHT;
+
+	/* BUG FIX: Set draw color to WHITE for text visibility */
+	SDL_SetRenderDrawColor(tileset_renderer, 255, 255, 255, 255);
+
+	/* Draw 8x8 font scaled to 16x16 (2x scale) */
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			if (bitmap[i] & (1 << j)) {
+				/* Draw 2x2 pixel block for better visibility */
+				SDL_RenderDrawPoint(tileset_renderer, screen_x + j * 2,     screen_y + i * 2);
+				SDL_RenderDrawPoint(tileset_renderer, screen_x + j * 2 + 1, screen_y + i * 2);
+				SDL_RenderDrawPoint(tileset_renderer, screen_x + j * 2,     screen_y + i * 2 + 1);
+				SDL_RenderDrawPoint(tileset_renderer, screen_x + j * 2 + 1, screen_y + i * 2 + 1);
+			}
+		}
+	}
+
+	/* Restore color to black for background */
+	SDL_SetRenderDrawColor(tileset_renderer, 0, 0, 0, 255);
+
+	/* BUG FIX: Force immediate screen update to prevent black screen */
+	SDL_RenderPresent(tileset_renderer);
+}
+
+/*
+ * graphics_read_key: Read keyboard input from SDL events
+ * Returns: ASCII character code if key pressed
+ * 
+ * BUG FIX #1: Handle SDL_QUIT to prevent zombie window
+ * BUG FIX #3: Handle SDL_WINDOWEVENT for window exposure/redraw
+ * 
+ * Blocking behavior: Waits for key press (matches readchar() semantics)
+ */
+int
+graphics_read_key(void)
+{
+	SDL_Event event;
+
+	if (!tileset_renderer)
+		return 0;
+
+	/* Blocking loop - wait for key press */
+	while (1) {
+		/* Poll events to keep window responsive */
+		if (SDL_PollEvent(&event)) {
+			switch (event.type) {
+			case SDL_QUIT:
+				/* BUG FIX: User closed window - exit gracefully */
+				SDL_Quit();
+				exit(0);
+				break;
+
+			case SDL_KEYDOWN:
+				{
+					SDL_Keysym keysym = event.key.keysym;
+					
+					/* Handle special keys */
+					switch (keysym.sym) {
+					case SDLK_RETURN:
+					case SDLK_KP_ENTER:
+						return '\n';
+					case SDLK_ESCAPE:
+						return 27;  /* ESC */
+					case SDLK_BACKSPACE:
+						return '\b';
+					case SDLK_TAB:
+						return '\t';
+					case SDLK_SPACE:
+						return ' ';
+					case SDLK_UP:
+						return 'k';  /* Rogue movement */
+					case SDLK_DOWN:
+						return 'j';
+					case SDLK_LEFT:
+						return 'h';
+					case SDLK_RIGHT:
+						return 'l';
+					}
+
+					/* Handle printable ASCII characters */
+					if (keysym.sym >= 32 && keysym.sym <= 126) {
+						return (int)keysym.sym;
+					}
+				}
+				break;
+
+			case SDL_WINDOWEVENT:
+				/* BUG FIX: Repaint window when exposed/restored */
+				if (event.window.event == SDL_WINDOWEVENT_EXPOSED) {
+					SDL_RenderPresent(tileset_renderer);
+				}
+				break;
+			}
+		} else {
+			/* Small delay to prevent 100% CPU usage */
+			SDL_Delay(10);
+		}
+	}
 }
 
 #endif /* ROGUE_GRAPHICS */

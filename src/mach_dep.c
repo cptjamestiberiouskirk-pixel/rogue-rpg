@@ -7,6 +7,10 @@
 #include	"rogue.h"
 #include	"curses.h"
 
+#ifdef ROGUE_GRAPHICS
+#include	"graphics.h"
+#endif
+
 #ifndef ROGUE_NO_X11
 #include <X11/Xlib.h>
 
@@ -694,12 +698,22 @@ readchar()
 	 * while there are no characters in the type ahead buffer
 	 * update the status line at the bottom of the screen
 	 */
-	do
+#ifdef ROGUE_GRAPHICS
+	/* Use SDL input when graphics enabled */
+	if (graphics_enabled) {
+		SIG2();
+		cur_refresh();
+		xch = graphics_read_key();
+	} else
+#endif
 	{
-		SIG2();  /* Rogue spends a lot of time here @ you bet! */
-		cur_refresh();  //@ command input
+		do
+		{
+			SIG2();  /* Rogue spends a lot of time here @ you bet! */
+			cur_refresh();  //@ command input
+		}
+		while ((xch = getch_timeout(250)) == NOCHAR);
 	}
-	while ((xch = getch_timeout(250)) == NOCHAR);
 	ch = xlate_ch(xch);
 	if (ch == ESCAPE)
 		count = 0;

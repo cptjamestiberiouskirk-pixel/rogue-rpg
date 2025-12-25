@@ -859,7 +859,6 @@ cur_refresh(void)
 {
 #ifdef ROGUE_GRAPHICS
 	if (graphics_enabled && tileset_renderer) {
-		static int refresh_count = 0;
 		SDL_Event event;
 		
 		/* Process SDL events to keep window responsive */
@@ -870,10 +869,7 @@ cur_refresh(void)
 			}
 		}
 		
-		if (refresh_count < 3) {
-			fprintf(stderr, "cur_refresh: presenting frame %d\n", refresh_count);
-			refresh_count++;
-		}
+		/* Present all accumulated rendering */
 		SDL_RenderPresent(tileset_renderer);
 	}
 #endif
@@ -936,13 +932,21 @@ cur_addch(byte chr)
 	int r, c;
 #endif
 	byte old_attr;
-	static int addch_count = 0;
 
 #ifdef ROGUE_GRAPHICS
-	if (addch_count < 10 && (chr == '#' || chr == '.' || chr == '+' || chr == '@')) {
-		fprintf(stderr, "cur_addch: chr='%c' at (%d,%d), graphics_enabled=%d, renderer=%p\n",
-			chr, graphics_cursor_col, graphics_cursor_row, graphics_enabled, (void*)tileset_renderer);
-		addch_count++;
+	/* Render text to SDL window if graphics enabled */
+	if (graphics_enabled && tileset_renderer) {
+		/* Clear background at this position first (black) */
+		SDL_SetRenderDrawColor(tileset_renderer, 0, 0, 0, 255);
+		SDL_Rect clear_rect;
+		clear_rect.x = graphics_cursor_col * TILE_WIDTH;
+		clear_rect.y = graphics_cursor_row * TILE_HEIGHT;
+		clear_rect.w = TILE_WIDTH;
+		clear_rect.h = TILE_HEIGHT;
+		SDL_RenderFillRect(tileset_renderer, &clear_rect);
+
+		/* Draw character using bitmap font */
+		graphics_draw_char(graphics_cursor_col, graphics_cursor_row, chr);
 	}
 #endif
 
@@ -1044,7 +1048,7 @@ cur_addch(byte chr)
 	}
 #else
 #ifdef ROGUE_GRAPHICS
-	/* Render graphical tile if graphics mode is enabled */
+	/* Render graphical tile if graphics mode is enabled AND character has tile */
 	if (graphics_enabled && tileset_renderer) {
 		render_dungeon_tile(graphics_cursor_col * TILE_WIDTH, 
 		                     graphics_cursor_row * TILE_HEIGHT, chr);
@@ -1065,6 +1069,18 @@ cur_addch(byte chr)
 		break;
 #endif  // ROGUE_WIDECHAR
 	}
+
+	/* Update graphics cursor tracking */
+#ifdef ROGUE_GRAPHICS
+	graphics_cursor_col++;
+	if (graphics_cursor_col >= COLS) {
+		graphics_cursor_col = 0;
+		graphics_cursor_row++;
+		if (graphics_cursor_row >= LINES) {
+			graphics_cursor_row = LINES - 1;
+		}
+	}
+#endif
 #endif  // ROGUE_DOS_CURSES
 	ch_attr = old_attr;
 	return;
@@ -1752,6 +1768,21 @@ winit(void)
 #else
 	if (init_curses)
 		return;
+
+#ifdef ROGUE_GRAPHICS
+	/* Skip ncurses initialization if graphics mode is enabled */
+	if (graphics_enabled) {
+		init_curses = TRUE;
+		/* Set default terminal dimensions for graphics mode */
+		LINES = cur_LINES;
+		COLS = cur_COLS;
+		scr_type = ROGUE_SCR_TYPE;
+		at_table = color_attr;
+		if (bwflag)
+			at_table = monoc_attr;
+		return;
+	}
+#endif
 
 	/*@
 	 * ROGUE_SCR_TYPE should affect both columns and colors, and scr_type
