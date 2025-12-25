@@ -7,6 +7,10 @@
 
 #include "extern.h"
 
+#ifdef ROGUE_GRAPHICS
+#include "graphics.h"
+#endif
+
 /*
  *  Options set for PC rogue
  */

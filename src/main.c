@@ -28,6 +28,9 @@ char do_force = FALSE;
 #ifdef LOGFILE
 int log_read, log_write;
 #endif
+#ifdef ROGUE_GRAPHICS
+extern int graphics_enabled;
+#endif
 
 /*
  * main:
@@ -98,6 +101,11 @@ main(argc, argv)
 					score(0,0,0);
 					fatal("");
 					break;
+#ifdef ROGUE_GRAPHICS
+				case 'g': case 'G':
+					graphics_enabled = 1;
+					break;
+#endif //ROGUE_GRAPHICS
 #ifdef LOGFILE
 				case 'l':
 					log_write = -1;

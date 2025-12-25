@@ -5,6 +5,10 @@
 #include	"extern.h"
 #include	"rogue.h"
 
+#ifdef ROGUE_GRAPHICS
+#include	"graphics.h"
+#endif
+
 #ifndef ROGUE_DOS_CURSES
 
 
@@ -97,6 +101,9 @@ static int c_row, c_col;   /*  Save cursor positions so we don't ask dos */
 static int scr_row[25];
 static int no_check = FALSE;  //@ do not wait for video retrace. Former extern
 #else
+/* For graphics mode: track current terminal cell position */
+static int graphics_cursor_row = 0;
+static int graphics_cursor_col = 0;
 #ifdef ROGUE_WIDECHAR
 static cchar_t  curtain[MAXLINES][MAXCOLS + 1];
 static cchar_t  cctemp;
@@ -548,6 +555,8 @@ cur_move(row, col)
 		swint(SW_SCR, regs);
 	}
 #else
+	graphics_cursor_row = row;
+	graphics_cursor_col = col;
 	return wmove(stdscr, row, col);
 #endif
 }
@@ -994,6 +1003,13 @@ cur_addch(byte chr)
 		cur_move(r,c+1);
 	}
 #else
+#ifdef ROGUE_GRAPHICS
+	/* Render graphical tile if graphics mode is enabled */
+	if (graphics_enabled && tileset_renderer && tileset_texture) {
+		render_dungeon_tile(graphics_cursor_col * TILE_WIDTH, 
+		                     graphics_cursor_row * TILE_HEIGHT, chr);
+	}
+#endif
 	switch (charset)
 	{
 	default:
