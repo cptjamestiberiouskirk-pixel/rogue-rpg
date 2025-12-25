@@ -220,31 +220,48 @@ get_tile_index(char ch, int *col, int *row)
 }
 
 /*
- * render_tile: Draw a single tile from tileset to screen
+ * render_tile: Draw a single tile to screen
  * screen_x, screen_y: destination in pixels
- * tile_col, tile_row: tile coordinates in tileset grid
+ * tile_col, tile_row: tile coordinates (for color selection)
  */
 void
 render_tile(int screen_x, int screen_y, int tile_col, int tile_row)
 {
-	SDL_Rect src_rect, dst_rect;
+	SDL_Rect dst_rect;
+	Uint8 r, g, b;
 
-	if (!tileset_texture || !tileset_renderer)
+	if (!tileset_renderer)
 		return;
 
-	/* Source rect in tileset (accounting for 1px spacing) */
-	src_rect.x = tile_col * (TILE_WIDTH + 1);
-	src_rect.y = tile_row * (TILE_HEIGHT + 1);
-	src_rect.w = TILE_WIDTH;
-	src_rect.h = TILE_HEIGHT;
-
-	/* Destination rect on screen */
 	dst_rect.x = screen_x;
 	dst_rect.y = screen_y;
 	dst_rect.w = TILE_WIDTH;
 	dst_rect.h = TILE_HEIGHT;
 
-	SDL_RenderCopy(tileset_renderer, tileset_texture, &src_rect, &dst_rect);
+	/* Determine color based on tile type */
+	if (tile_col == TILE_WALL_COL && tile_row == TILE_WALL_ROW) {
+		/* Wall: dark gray */
+		r = 64; g = 64; b = 64;
+	} else if (tile_col == TILE_FLOOR_COL && tile_row == TILE_FLOOR_ROW) {
+		/* Floor: tan/beige */
+		r = 200; g = 190; b = 170;
+	} else if (tile_col == TILE_DOOR_COL && tile_row == TILE_DOOR_ROW) {
+		/* Door: brown */
+		r = 139; g = 69; b = 19;
+	} else if (tile_col == TILE_PLAYER_COL && tile_row == TILE_PLAYER_ROW) {
+		/* Player: bright yellow */
+		r = 255; g = 255; b = 0;
+	} else {
+		/* Default: dark background */
+		r = 0; g = 0; b = 0;
+	}
+
+	SDL_SetRenderDrawColor(tileset_renderer, r, g, b, 255);
+	SDL_RenderFillRect(tileset_renderer, &dst_rect);
+
+	/* Draw border for visibility */
+	SDL_SetRenderDrawColor(tileset_renderer, 128, 128, 128, 255);
+	SDL_RenderDrawRect(tileset_renderer, &dst_rect);
 }
 
 /*

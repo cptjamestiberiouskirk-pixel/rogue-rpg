@@ -753,6 +753,12 @@ wsetmem(buffer, count, attrchar)
 void
 cur_clear(void)
 {
+#ifdef ROGUE_GRAPHICS
+	if (graphics_enabled && tileset_renderer) {
+		SDL_SetRenderDrawColor(tileset_renderer, 0, 0, 0, 255);
+		SDL_RenderClear(tileset_renderer);
+	}
+#endif
 #ifdef ROGUE_DOS_CURSES
 	if (scr_ds == svwin_ds)
 		wsetmem(savewin, LINES*COLS, 0x0720);
