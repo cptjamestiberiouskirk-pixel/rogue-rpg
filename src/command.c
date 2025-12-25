@@ -279,9 +279,31 @@ execcom()
 		when CTRL('I'): after = FALSE; {
 			THING *obj;
 			for (obj = pack; obj != NULL; obj = next(obj)) {
-				obj->_o._o_flags |= ISKNOW;
+				// 1. Identify the specific item (Stats for Weapons/Armor)
+				obj->o_flags |= ISKNOW;
+
+				// 2. Identify the "Type" globally (for Magic Items)
+				switch (obj->o_type) {
+					case SCROLL: 
+						s_know[obj->o_which] = TRUE; 
+						// Also identify the specific scroll name if needed
+						if (s_guess[obj->o_which]) *s_guess[obj->o_which] = 0;
+						break;
+					case POTION: 
+						p_know[obj->o_which] = TRUE; 
+						if (p_guess[obj->o_which]) *p_guess[obj->o_which] = 0;
+						break;
+					case RING:   
+						r_know[obj->o_which] = TRUE; 
+						if (r_guess[obj->o_which]) *r_guess[obj->o_which] = 0;
+						break;
+					case STICK:  
+						ws_know[obj->o_which] = TRUE; 
+						if (ws_guess[obj->o_which]) *ws_guess[obj->o_which] = 0;
+						break;
+				}
 			}
-			msg("All items identified!");
+			msg("All items identified! (Global Knowledge Unlocked)");
 		}
 		otherwise:
 			after = FALSE;

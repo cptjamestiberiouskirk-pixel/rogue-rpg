@@ -1,3 +1,4 @@
+#include <ncurses.h>
 #include "rogue.h"
 #include "curses.h"
 
@@ -254,15 +255,18 @@ inventory(THING *list, int type, char *lstr)
 		  !(type == STICK && list->o_enemy && list->o_charges))
 			continue;
 		n_objs++;
-		switch (list->o_rarity) {
-		    case COMMON: break;  /* default color */
-		    case ITEM_MAGIC: set_attr(COLOR_ITEM_MAGIC); break;
-		    case RARE: set_attr(COLOR_RARE); break;
-		    case LEGENDARY: set_attr(COLOR_LEGENDARY); break;
+		int color_attr = COLOR_PAIR(1); // Default to Common
+		if (list->o_flags & ISKNOW) { // Only show rarity colors if identified!
+		    switch (list->o_rarity) {
+		        case ITEM_MAGIC: color_attr = COLOR_PAIR(2) | A_BOLD; break;
+		        case RARE:       color_attr = COLOR_PAIR(3) | A_BOLD; break;
+		        case LEGENDARY:  color_attr = COLOR_PAIR(4) | A_BOLD | A_BLINK; break;
+		    }
 		}
+		attron(color_attr);
 		sprintf(inv_temp, "%c) %%s", ch);
 		add_line(lstr, inv_temp, inv_name(list, FALSE));
-		set_attr(0);  /* reset to normal */
+		attroff(color_attr);
 	}
 	if (n_objs == 0)
 	{

@@ -1420,6 +1420,12 @@ init_curses_colors(void)
 		}
 	}
 
+	// Initialize rarity color pairs
+	init_pair(1, COLOR_WHITE, COLOR_BLACK);    // Common
+	init_pair(2, COLOR_CYAN, COLOR_BLACK);     // Magic
+	init_pair(3, COLOR_YELLOW, COLOR_BLACK);   // Rare/Boss
+	init_pair(4, COLOR_MAGENTA, COLOR_BLACK);  // Legendary
+
 #ifdef ROGUE_DEBUG
 	int j;
 	printw("COLOR TEST - Displayed colors should match [R,G,B] values\n");

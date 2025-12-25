@@ -84,8 +84,8 @@ new_monster(THING *tp, byte type, coord *cp)
 	tp->t_pack = NULL;
 	tp->t_rarity = COMMON; // Default
 	
-	// 5% chance for a Boss (Rare), but only on deeper levels
-	if (level > 3 && rnd(100) < 5) {
+	// 20% chance for a Boss (Rare), but only on deeper levels
+	if (level > 1 && rnd(100) < 20) {
 		tp->t_rarity = RARE;
 		
 		// BUFF STATS for the Boss
