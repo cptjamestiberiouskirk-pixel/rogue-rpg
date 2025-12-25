@@ -32,6 +32,12 @@ A total conversion of the classic 1985 Rogue, grafting modern Action-RPG mechani
 
 ### Features
 
+#### Graphical Tileset Rendering
+- **Optional Graphics Mode:** Enable tile-based graphics with `-g` flag (requires `ROGUE_GRAPHICS=1` build)
+- **Procedural Fallback:** Automatically generates placeholder tiles if tilemap unavailable
+- **Terminal Compatible:** Seamless integration with traditional ASCII-based rendering
+- **See [GRAPHICS.md](GRAPHICS.md) for full documentation**
+
 #### Class System
 Choose your playstyle at the start:
 - **Warrior:** Tanky, starts with Ring Mail & Two-Handed Sword.
@@ -77,6 +83,16 @@ make ROGUE_CHARSET=1
 ./rogue
 ```
 
+To enable graphical tileset rendering (requires SDL2):
+```sh
+sudo apt install libsdl2-dev
+cd src
+make rogue ROGUE_GRAPHICS=1
+./rogue -g
+```
+
+For comprehensive information on graphics mode, see [GRAPHICS.md](GRAPHICS.md).
+
 For Ubuntu 18.04, use `libncursesw5-dev` instead of `libncurses-dev`, or
 `libncurses5-dev` for ASCII mode.
 
@@ -100,6 +116,11 @@ Strongly suggested:
 
 #### Compile/Build time:
 
+- `ROGUE_GRAPHICS`: Enable graphical tileset rendering overlay. Valid values are:
+    - Unset (default): ASCII-only rendering via ncurses.
+    - `1`: Enable graphics mode with SDL2 tile rendering. Requires `libsdl2-dev`.
+    - Build: `make ROGUE_GRAPHICS=1`. Runtime: use `-g` flag or leave unset for ASCII.
+    - See [GRAPHICS.md](GRAPHICS.md) for full documentation.
 - `ROGUE_CHARSET`: The character set / encoding used by the game. Valid values are:
     - `1`: Plain ASCII. Looks like Rogue UNIX, but with color. Only requires `ncurses`.
     - `2`: Original CP437, as used in DOS. Requires `ncurses`, a terminal capable of handling it,
@@ -161,6 +182,8 @@ Command-line options, all preserved from the original:
 - `-s`: Only show the high-scores and exit. Fully working!
 - `-r`: Restore a previously-saved game state. Currently a no-op.
 - `-l`, `-k`: Only enabled if original `LOGFILE` compile option is set. Unknown effect, if any.
+- `-g`: Enable graphics mode (requires binary compiled with `ROGUE_GRAPHICS=1`). See [GRAPHICS.md](GRAPHICS.md).
+- `-G`: Explicitly disable graphics mode (even if compiled in).
 
 Note: options are all case-_insensitive_, and can use either `-` or `/`, as the original.
 So `-r`, `-R`, `/r` and `/R` are all equivalent.
