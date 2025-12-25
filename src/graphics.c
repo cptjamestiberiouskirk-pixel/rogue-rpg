@@ -22,13 +22,13 @@ SDL_Renderer *tileset_renderer = NULL;
 /*
  * create_graphics_window: Initialize SDL window and renderer for graphics mode
  * Called from main.c when -g flag is set
- * Window size: 80 columns × 24 rows × 16px per tile
+ * Window size: 2560x1440 (2K resolution)
  */
 int
 create_graphics_window(void)
 {
-	int window_width = 80 * TILE_WIDTH;    /* 1280px */
-	int window_height = 24 * TILE_HEIGHT;  /* 384px */
+	int window_width = 2560;
+	int window_height = 1440;
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		fprintf(stderr, "Graphics: SDL initialization failed: %s\n", SDL_GetError());
