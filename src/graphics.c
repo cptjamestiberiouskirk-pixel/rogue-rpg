@@ -66,6 +66,7 @@ create_graphics_window(void)
 	SDL_RenderPresent(tileset_renderer);
 
 	graphics_enabled = 1;
+	fprintf(stderr, "Graphics window created successfully: %dx%d\n", window_width, window_height);
 	return 0;
 }
 

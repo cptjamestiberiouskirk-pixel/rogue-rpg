@@ -1016,7 +1016,7 @@ cur_addch(byte chr)
 #else
 #ifdef ROGUE_GRAPHICS
 	/* Render graphical tile if graphics mode is enabled */
-	if (graphics_enabled && tileset_renderer && tileset_texture) {
+	if (graphics_enabled && tileset_renderer) {
 		render_dungeon_tile(graphics_cursor_col * TILE_WIDTH, 
 		                     graphics_cursor_row * TILE_HEIGHT, chr);
 	}
