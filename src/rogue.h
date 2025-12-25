@@ -345,6 +345,18 @@ typedef enum {
 } ItemRarity;
 
 /*
+ * Class system
+ */
+typedef enum { C_WARRIOR, C_ROGUE, C_SORCERER } ClassType;
+
+/*
+ * Monster affixes
+ */
+typedef enum { MA_NONE, MA_VAMPIRIC, MA_THORNS, MA_TELEPORTER } MonsterAffix;
+
+extern ClassType player_class;
+
+/*
  * Now we define the structures and types
  */
 
@@ -429,6 +441,7 @@ union thing {
 	struct room *_t_room;		/* Current room for thing */
 	union thing *_t_pack;		/* What the thing is carrying */
 	ItemRarity _t_rarity;		/* Rarity level for bosses */
+	MonsterAffix _t_affix;		/* Special ability for bosses */
 	} _t;
 	struct {
 	union thing *_l_next, *_l_prev;	/* Next pointer in link */
@@ -467,6 +480,7 @@ typedef union thing THING;
 #define t_pack		_t._t_pack
 #define t_room		_t._t_room
 #define t_rarity	_t._t_rarity
+#define t_affix		_t._t_affix
 #define o_type		_o._o_type
 #define o_pos		_o._o_pos
 #define o_text		_o._o_text
@@ -671,7 +685,7 @@ bool	save(int which);
 bool	is_magic(THING *obj);
 void	attack(THING *mp);
 void	check_level(void);
-void	hit(char *er, char *ee);
+void	hit(char *er, char *ee, THING *monster);
 void	miss(char *er, char *ee);
 void	raise_level(void);
 void	thunk(THING *weap, char *mname, char *does, char *did);

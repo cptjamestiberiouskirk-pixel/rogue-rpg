@@ -122,6 +122,30 @@ main(argc, argv)
 		seed = dnum;
 
 
+		/*
+		 * Class selection
+		 */
+		char ch;
+		while (TRUE) {
+			clear();
+			mvaddstr(10, 10, "Choose Class:");
+			mvaddstr(12, 10, "(W)arrior - High strength, melee focus");
+			mvaddstr(13, 10, "(R)ogue - Balanced, ranged focus");
+			mvaddstr(14, 10, "(S)orcerer - Low strength, magic focus");
+			cur_refresh();
+			ch = readchar();
+			if (ch == 'w' || ch == 'W') {
+				player_class = C_WARRIOR;
+				break;
+			} else if (ch == 'r' || ch == 'R') {
+				player_class = C_ROGUE;
+				break;
+			} else if (ch == 's' || ch == 'S') {
+				player_class = C_SORCERER;
+				break;
+			}
+		}
+
 		init_player();			/* Set up initial player stats */
 		init_things();			/* Set up probabilities of things */
 		init_names();			/* Set up names of scrolls */

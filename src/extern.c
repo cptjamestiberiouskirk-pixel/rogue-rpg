@@ -7,6 +7,8 @@
 #include "rogue.h"
 #include "curses.h"
 
+ClassType player_class = C_WARRIOR;
+
 #ifdef LOG
 int captains_log = FALSE;
 #endif //LOG

@@ -46,7 +46,14 @@ fight(coord *mp, char mn, THING *weap, bool thrown)
 		if (thrown)
 			thunk(weap, mname, "hits", "hit");
 		else
-			hit(NULL, mname);
+			hit(NULL, mname, tp);
+		// Thorns Affix: Reflect Damage
+		if (tp->t_affix == MA_THORNS) {
+			pstats.s_hpt -= 2;
+			msg("You take 2 damage from Thorns!");
+			if (pstats.s_hpt <= 0)
+				death(tp->t_type);
+		}
 		//@ original missed NULL check for weap
 		if (weap && weap->o_type == POTION) {
 			th_effect(weap, tp);
@@ -102,7 +109,7 @@ attack(THING *mp)
 	if (on(player, ISBLIND))
 		mname = it;
 	if (roll_em(mp, &player, NULL, FALSE)) {
-		hit(mname, NULL);
+		hit(mname, NULL, NULL);
 		if (pstats.s_hpt <= 0)
 			death(mp->t_type);	/* Bye bye life ... */
 		if (!on(*mp, ISCANC))
@@ -241,6 +248,13 @@ attack(THING *mp)
 		}
 		otherwise:
 			break;
+		}
+		// Vampiric Affix: Life Steal
+		if (mp->t_affix == MA_VAMPIRIC) {
+			mp->t_stats.s_hpt += 5;
+			if (mp->t_stats.s_hpt > mp->t_stats.s_maxhp)
+				mp->t_stats.s_hpt = mp->t_stats.s_maxhp;
+			msg("The Vampiric monster drains your life!");
 		}
 	}
 	else if (mp->t_type != 'I')
@@ -446,7 +460,7 @@ prname(char *who, bool upper)
  *	Print a message to indicate a succesful hit
  */
 void
-hit(char *er, char *ee)
+hit(char *er, char *ee, THING *monster)
 {
 	register char *s = "";
 
@@ -459,7 +473,16 @@ hit(char *er, char *ee)
 		when 3: s = (er == 0 ? " swing and hit " : " swings and hits ");
 		break;
 	}
-	msg("%s%s",s,prname(ee, FALSE));
+	if (er == 0 && monster) {  // Player hitting monster
+		msg("%s%s (HP: %d/%d)", s, prname(ee, FALSE), monster->t_stats.s_hpt, monster->t_stats.s_maxhp);
+		// Teleporter Affix: Evasive
+		if (monster->t_affix == MA_TELEPORTER && rnd(100) < 25) {
+			rnd_pos(&rooms[rnd_room()], &monster->t_pos);
+			msg("The monster teleports away!");
+		}
+	} else {
+		msg("%s%s", s, prname(ee, FALSE));
+	}
 }
 
 /*

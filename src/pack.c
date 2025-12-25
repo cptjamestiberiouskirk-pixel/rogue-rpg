@@ -226,6 +226,21 @@ picked_up:
 	if (!silent)
 		msg("%s%s (%c)",noterse("you now have "),
 			inv_name(obj, TRUE), pack_char(obj));
+
+	// Auto-equip logic
+	if (obj->o_type == WEAPON && cur_weapon) {
+		int new_power = obj->o_hplus + obj->o_dplus;
+		int cur_power = cur_weapon->o_hplus + cur_weapon->o_dplus;
+		if (new_power > cur_power) {
+			cur_weapon = obj;
+			msg("Auto-equipped %s!", inv_name(obj, TRUE));
+		}
+	} else if (obj->o_type == ARMOR && cur_armor) {
+		if (obj->o_ac < cur_armor->o_ac) {  // Lower AC is better
+			cur_armor = obj;
+			msg("Auto-equipped %s!", inv_name(obj, TRUE));
+		}
+	}
 }
 
 /*
@@ -261,6 +276,8 @@ inventory(THING *list, int type, char *lstr)
 		        case ITEM_MAGIC: color_attr = COLOR_PAIR(2) | A_BOLD; break;
 		        case RARE:       color_attr = COLOR_PAIR(3) | A_BOLD; break;
 		        case LEGENDARY:  color_attr = COLOR_PAIR(4) | A_BOLD | A_BLINK; break;
+		        case COMMON:     /* Fallthrough */
+		        default:         color_attr = COLOR_PAIR(1); break; // Handle default/Common
 		    }
 		}
 		attron(color_attr);

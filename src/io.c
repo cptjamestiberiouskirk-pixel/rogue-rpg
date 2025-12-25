@@ -287,14 +287,7 @@ void
 status(void)
 {
 	int oy, ox;
-	static int s_hungry;
-	static int s_lvl, s_pur = -1, s_hp, s_ac = 0;
-	static str_t s_str;
-	static int s_elvl = 0;
-	static char *state_name[] =
-	{
-		"      ", "Hungry", "Weak", "Faint","?"
-	};
+	static int s_lvl;
 
 	SIG2();
 
@@ -302,91 +295,16 @@ status(void)
 	if (is_color)
 		yellow();
 
-	/*@
-	 * Rogue used a rudimentary custom sprintf() that didn't fully support
-	 * the (quite sophisticated) numeric formatting strings used on status.
-	 * As <stdio.h>'s sprintf() does, formatting was simplified so the output
-	 * matches the original.
-	 */
-
 	/*
 	 * Level:
 	 */
 	if (s_lvl != level)
 	{
 		s_lvl = level;
-	move(PT(22,23),0);
-	printw("Level:%-4d", level);
-	}
-
-	/*
-	 * Hits:
-	 */
-	if (s_hp != pstats.s_hpt)
-	{
-		s_hp = pstats.s_hpt;
-		move(PT(22,23),12);
-		printw("Hits:%d(%d) ", pstats.s_hpt, max_hp);
-		/* just in case they get wraithed with 3 digit max hits */
-		if (pstats.s_hpt < 100)
-			addch(' ');
-	}
-
-	/*
-	 * Str:
-	 */
-	if (pstats.s_str != s_str)
-	{
-		s_str = pstats.s_str;
-		move(PT(22,23),26);
-		printw("Str:%d(%d) ", pstats.s_str, max_stats.s_str);
-	}
-
-	/*
-	 * Gold
-	 */
-	if(s_pur != purse)
-	{
-		s_pur = purse;
-		move(23, PT(0,40));
-		printw("Gold:%-5u",purse);
-	}
-
-	/*
-	 * Armor:
-	 */
-	if(s_ac != pstats.s_arm)
-	{
-		s_ac = pstats.s_arm;
-		move(23,PT(12,52));
-		printw("Armor:%-2d", AC(pstats.s_arm));
-	}
-
-	/*
-	 * Exp:
-	 */
-	if (s_elvl != pstats.s_lvl)
-	{
-		s_elvl = pstats.s_lvl;
-		move(23, PT(22, 62));
-		printw("%-12s", he_man[s_elvl-1]);
-	}
-
-	/*
-	 * Hungry state
-	 */
-	if (s_hungry != hungry_state)
-	{
-		s_hungry = hungry_state;
-		move(24, PT(28,58));
-		addstr(state_name[0]);
-		move(24, PT(28,58));
-		if (hungry_state)
-		{
-			bold();
-			addstr(state_name[hungry_state]);
-			standend();
-		}
+		move(PT(22,23),0);
+		printw("Lvl:%d  HP:%d/%d  Str:%d(%d)  AC:%d  Exp:%ld/%ld  Gold:%d",
+			level, pstats.s_hpt, max_hp, pstats.s_str, max_stats.s_str,
+			pstats.s_arm, pstats.s_exp, e_levels[pstats.s_lvl], purse);
 	}
 
 	if (is_color)

@@ -83,6 +83,7 @@ new_monster(THING *tp, byte type, coord *cp)
 	tp->t_turn = TRUE;
 	tp->t_pack = NULL;
 	tp->t_rarity = COMMON; // Default
+	tp->t_affix = MA_NONE; // Default
 	
 	// 20% chance for a Boss (Rare), but only on deeper levels
 	if (level > 1 && rnd(100) < 20) {
@@ -96,6 +97,10 @@ new_monster(THING *tp, byte type, coord *cp)
 		
 		// Optional: Make them mean so they chase you
 		tp->t_flags |= ISMEAN; 
+
+		// Assign random affix
+		tp->t_affix = rnd(3) + 1; // 1-3: Vampiric, Thorns, Teleporter
+		// msg("Debug: Spawned Boss with Affix %d", tp->t_affix); // Optional debug
 	}
 	if (ISWEARING(R_AGGR))
 		start_run(cp);

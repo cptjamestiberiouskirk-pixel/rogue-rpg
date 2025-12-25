@@ -25,65 +25,132 @@ init_player()
 	 */
 	setmem(_things,MAXITEMS*sizeof(THING),0);
 	setmem(_t_alloc,MAXITEMS*sizeof(int),0);
-	/*
-	 * Give the rogue his weaponry.  First a mace.
-	 */
-	obj = new_item();
-	obj->o_type = WEAPON;
-	obj->o_which = MACE;
-	init_weapon(obj, MACE);
-	obj->o_hplus = 1;
-	obj->o_dplus = 1;
-	obj->o_flags |= ISKNOW;
-	obj->o_count = 1;
-	obj->o_group = 0;
-	add_pack(obj, TRUE);
-	cur_weapon = obj;
-	/*
-	 * Now a +1 bow
-	 */
-	obj = new_item();
-	obj->o_type = WEAPON;
-	obj->o_which = BOW;
-	init_weapon(obj, BOW);
-	obj->o_hplus = 1;
-	obj->o_dplus = 0;
-	obj->o_count = 1;
-	obj->o_group = 0;
-	obj->o_flags |= ISKNOW;
-	add_pack(obj, TRUE);
-	/*
-	 * Now some arrows
-	 */
-	obj = new_item();
-	obj->o_type = WEAPON;
-	obj->o_which = ARROW;
-	init_weapon(obj, ARROW);
-	obj->o_count = rnd(15) + 25;
-	obj->o_hplus = obj->o_dplus = 0;
-	obj->o_flags |= ISKNOW;
-	add_pack(obj, TRUE);
-	/*
-	 * And his suit of armor
-	 */
-	obj = new_item();
-	obj->o_type = ARMOR;
-	obj->o_which = RING_MAIL;
-	obj->o_ac = a_class[RING_MAIL] - 1;
-	obj->o_flags |= ISKNOW;
-	obj->o_count = 1;
-	obj->o_group = 0;
-	cur_armor = obj;
-	add_pack(obj, TRUE);
-	/*
-	 * Give him some food too
-	 */
-	obj = new_item();
-	obj->o_type = FOOD;
-	obj->o_count = 1;
-	obj->o_which = 0;
-	obj->o_group = 0;
-	add_pack(obj, TRUE);
+
+	switch (player_class) {
+	case C_WARRIOR:
+		pstats.s_str = 18;
+		pstats.s_maxhp = 14;
+		pstats.s_hpt = 14;
+		// Ring Mail
+		obj = new_item();
+		obj->o_type = ARMOR;
+		obj->o_which = RING_MAIL;
+		obj->o_ac = a_class[RING_MAIL];
+		obj->o_flags |= ISKNOW;
+		obj->o_count = 1;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		cur_armor = obj;
+		// Two-Handed Sword
+		obj = new_item();
+		obj->o_type = WEAPON;
+		obj->o_which = TWOSWORD;
+		init_weapon(obj, TWOSWORD);
+		obj->o_flags |= ISKNOW;
+		obj->o_count = 1;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		cur_weapon = obj;
+		// 1 Ration
+		obj = new_item();
+		obj->o_type = FOOD;
+		obj->o_count = 1;
+		obj->o_which = 0;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		break;
+	case C_ROGUE:
+		pstats.s_str = 16;
+		pstats.s_maxhp = 12;
+		pstats.s_hpt = 12;
+		// Leather Armor
+		obj = new_item();
+		obj->o_type = ARMOR;
+		obj->o_which = LEATHER;
+		obj->o_ac = a_class[LEATHER];
+		obj->o_flags |= ISKNOW;
+		obj->o_count = 1;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		cur_armor = obj;
+		// Short Bow
+		obj = new_item();
+		obj->o_type = WEAPON;
+		obj->o_which = BOW;
+		init_weapon(obj, BOW);
+		obj->o_flags |= ISKNOW;
+		obj->o_count = 1;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		cur_weapon = obj;
+		// 40 Arrows
+		obj = new_item();
+		obj->o_type = WEAPON;
+		obj->o_which = ARROW;
+		init_weapon(obj, ARROW);
+		obj->o_count = 40;
+		obj->o_flags |= ISKNOW;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		// Dagger
+		obj = new_item();
+		obj->o_type = WEAPON;
+		obj->o_which = DAGGER;
+		init_weapon(obj, DAGGER);
+		obj->o_flags |= ISKNOW;
+		obj->o_count = 1;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		// 1 Ration
+		obj = new_item();
+		obj->o_type = FOOD;
+		obj->o_count = 1;
+		obj->o_which = 0;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		break;
+	case C_SORCERER:
+		pstats.s_str = 13;
+		pstats.s_maxhp = 10;
+		pstats.s_hpt = 10;
+		// Dagger
+		obj = new_item();
+		obj->o_type = WEAPON;
+		obj->o_which = DAGGER;
+		init_weapon(obj, DAGGER);
+		obj->o_flags |= ISKNOW;
+		obj->o_count = 1;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		cur_weapon = obj;
+		// Wand of Magic Missile
+		obj = new_item();
+		obj->o_type = STICK;
+		obj->o_which = WS_MISSILE;
+		fix_stick(obj);
+		obj->o_charges = 5 + rnd(5);
+		obj->o_flags |= ISKNOW;
+		obj->o_count = 1;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		// 2 Identify Scrolls
+		obj = new_item();
+		obj->o_type = SCROLL;
+		obj->o_which = S_IDENT;
+		obj->o_flags |= ISKNOW;
+		obj->o_count = 2;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		// 1 Healing Potion
+		obj = new_item();
+		obj->o_type = POTION;
+		obj->o_which = P_HEALING;
+		obj->o_flags |= ISKNOW;
+		obj->o_count = 1;
+		obj->o_group = 0;
+		add_pack(obj, TRUE);
+		break;
+	}
 }
 
 /*
