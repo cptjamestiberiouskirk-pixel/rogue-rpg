@@ -20,6 +20,7 @@
 # Chooses and finds rogue-sdl (for splash) or bare rogue and a suitable terminal
 
 sdl=1
+graphics=1
 cmd=
 rogueargs=()
 here=$(dirname "$(readlink -f "$0")")
@@ -43,6 +44,7 @@ usage() {
 	echo "Usage: ${0##*/} [-h|--help]" \
 		"[-f|--full[-]screen]" \
 		"[-S|--no-splash]" \
+		"[-G|--no-graphics]" \
 		"[-r|--rogue CMD|PATH]" \
 		"[--] [roguepc args]"
 	exit
@@ -52,7 +54,8 @@ usage() {
 for arg in "$@"; do [[ "$arg" == "-h" || "$arg" == "--help" ]] && usage ; done
 while (( $# )); do
 	case "$1" in
-	-S|--no--splash) sdl=0;;
+	-S|--no-splash) sdl=0;;
+	-G|--no-graphics) graphics=0;;
 	-r|--rogue) shift; cmd=$1;;
 	   --rogue=*) cmd=${1#*=};;
 	--) shift; break;;
@@ -85,10 +88,20 @@ if [[ -z "$cmd" ]] && ! findcmd; then
 	exit 1
 fi
 
+# Add -g flag to enable graphics mode if graphics are enabled
+if ((graphics)); then
+	# Check if -g flag is not already present
+	if [[ ! " ${rogueargs[*]} " =~ " -g " ]] && [[ ! " ${rogueargs[*]} " =~ " -G " ]]; then
+		rogueargs=( "-g" "${rogueargs[@]}" )
+	fi
+fi
+
 if   [[ "$DISPLAY" ]] && exists xterm; then
 	"$here"/roguepc-xterm          --rogue "$cmd" "${rogueargs[@]}"
 elif [[ "$DISPLAY" ]] && exists gnome-terminal; then
 	"$here"/roguepc-gnome-terminal --rogue "$cmd" "${rogueargs[@]}"
 else
+	"$cmd" "${rogueargs[@]}"
+fi
 	"$cmd" "${rogueargs[@]}"
 fi
