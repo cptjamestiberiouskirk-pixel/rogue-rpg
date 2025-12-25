@@ -213,22 +213,24 @@ render_tile(int screen_x, int screen_y, int tile_col, int tile_row)
  * render_dungeon_tile: Render character as tile if graphics enabled
  * Falls back to ASCII rendering if no tile mapping exists
  */
-void
+int
 render_dungeon_tile(int screen_x, int screen_y, char ch)
 {
 	int tile_col, tile_row;
 
 	if (!graphics_enabled)
-		return;
+		return -1;
 
 	if (!tileset_renderer || !tileset_texture)
-		return;
+		return -1;
 
 	/* Try to get sprite coordinates */
 	if (get_tile_index(ch, &tile_col, &tile_row) == 0) {
 		render_tile(screen_x, screen_y, tile_col, tile_row);
+		return 0;  /* Success - sprite rendered */
 	}
-	/* If no tile mapping, ASCII rendering in curses.c handles it */
+	/* No tile mapping available */
+	return -1;
 }
 
 /*

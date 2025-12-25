@@ -61,7 +61,7 @@ int  load_tileset(SDL_Renderer *renderer, const char *filename);
 void unload_tileset(void);
 int  get_tile_index(char ch, int *col, int *row);
 void render_tile(int screen_x, int screen_y, int tile_col, int tile_row);
-void render_dungeon_tile(int screen_x, int screen_y, char ch);
+int  render_dungeon_tile(int screen_x, int screen_y, char ch);
 void graphics_draw_char(int x, int y, char c);
 int  graphics_read_key(void);
 

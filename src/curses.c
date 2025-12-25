@@ -934,7 +934,7 @@ cur_addch(byte chr)
 	byte old_attr;
 
 #ifdef ROGUE_GRAPHICS
-	/* Render text to SDL window if graphics enabled */
+	/* Render to SDL window if graphics enabled */
 	if (graphics_enabled && tileset_renderer) {
 		/* Clear background at this position first (black) */
 		SDL_SetRenderDrawColor(tileset_renderer, 0, 0, 0, 255);
@@ -945,8 +945,12 @@ cur_addch(byte chr)
 		clear_rect.h = TILE_HEIGHT;
 		SDL_RenderFillRect(tileset_renderer, &clear_rect);
 
-		/* Draw character using bitmap font */
-		graphics_draw_char(graphics_cursor_col, graphics_cursor_row, chr);
+		/* Try to render as sprite first, fallback to ASCII font if no sprite */
+		if (render_dungeon_tile(graphics_cursor_col * TILE_WIDTH,
+		                        graphics_cursor_row * TILE_HEIGHT, chr) != 0) {
+			/* No sprite available - use bitmap font */
+			graphics_draw_char(graphics_cursor_col, graphics_cursor_row, chr);
+		}
 	}
 #endif
 
@@ -1047,13 +1051,6 @@ cur_addch(byte chr)
 		cur_move(r,c+1);
 	}
 #else
-#ifdef ROGUE_GRAPHICS
-	/* Render graphical tile if graphics mode is enabled AND character has tile */
-	if (graphics_enabled && tileset_renderer) {
-		render_dungeon_tile(graphics_cursor_col * TILE_WIDTH, 
-		                     graphics_cursor_row * TILE_HEIGHT, chr);
-	}
-#endif
 	switch (charset)
 	{
 	default:
