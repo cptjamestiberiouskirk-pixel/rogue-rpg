@@ -73,34 +73,41 @@ new_monster(THING *tp, byte type, coord *cp)
 	tp->t_oldch = '@';
 	tp->t_room = roomin(cp);
 	mp = &monsters[tp->t_type-'A'];
-	tp->t_stats.s_lvl = mp->m_stats.s_lvl + lev_add;
+	int base_level = mp->m_stats.s_lvl + lev_add;
+	int player_level = max(1, pstats.s_lvl);
+	bool is_boss = FALSE;
+
+	tp->t_rarity = COMMON; // Default
+	tp->t_affix = MA_NONE; // Default
+
+	if (level > 1 && rnd(100) < 20) {
+		is_boss = TRUE;
+		tp->t_rarity = RARE;
+	}
+
+	if (!is_boss && base_level > player_level)
+		base_level = player_level;
+	if (base_level < 1)
+		base_level = 1;
+
+	tp->t_stats.s_lvl = base_level;
 	tp->t_stats.s_maxhp = tp->t_stats.s_hpt = roll(tp->t_stats.s_lvl, 8);
-	tp->t_stats.s_arm = mp->m_stats.s_arm - lev_add;
+	int level_bonus = max(0, tp->t_stats.s_lvl - mp->m_stats.s_lvl);
+	tp->t_stats.s_arm = mp->m_stats.s_arm - level_bonus;
 	tp->t_stats.s_dmg = mp->m_stats.s_dmg;
 	tp->t_stats.s_str = mp->m_stats.s_str;
-	tp->t_stats.s_exp = mp->m_stats.s_exp + lev_add * 10 + exp_add(tp);
+	tp->t_stats.s_exp = mp->m_stats.s_exp + level_bonus * 10 + exp_add(tp);
 	tp->t_flags = mp->m_flags;
 	tp->t_turn = TRUE;
 	tp->t_pack = NULL;
-	tp->t_rarity = COMMON; // Default
-	tp->t_affix = MA_NONE; // Default
-	
-	// 20% chance for a Boss (Rare), but only on deeper levels
-	if (level > 1 && rnd(100) < 20) {
-		tp->t_rarity = RARE;
-		
-		// BUFF STATS for the Boss
+
+	if (is_boss) {
 		tp->t_stats.s_maxhp *= 2;      // Double HP
 		tp->t_stats.s_hpt = tp->t_stats.s_maxhp;
 		tp->t_stats.s_str += 3;        // Stronger
 		tp->t_stats.s_exp *= 3;        // More XP
-		
-		// Optional: Make them mean so they chase you
-		tp->t_flags |= ISMEAN; 
-
-		// Assign random affix
-		tp->t_affix = rnd(3) + 1; // 1-3: Vampiric, Thorns, Teleporter
-		// msg("Debug: Spawned Boss with Affix %d", tp->t_affix); // Optional debug
+		tp->t_flags |= ISMEAN;
+		tp->t_affix = rnd(3) + 1;      // 1-3: Vampiric, Thorns, Teleporter
 	}
 	if (ISWEARING(R_AGGR))
 		start_run(cp);

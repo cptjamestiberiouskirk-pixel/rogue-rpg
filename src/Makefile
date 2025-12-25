@@ -12,11 +12,22 @@
 #
 TARGET:=rogue
 # ISO C17/18 requires GCC8 or greater: CC=gcc-8 make ...
-CFLAGS:=-Wall -Wextra -std=c17 -pedantic
+CFLAGS:=-Wall -Wextra -std=c17 -pedantic -Werror
 LDLIBS:=
 
 # Defines from original Rogue code turned on by default here:
 CFLAGS+=-DMINROG
+# Optional strict warning suite
+ifdef ROGUE_STRICT
+CFLAGS+=-Wshadow -Wconversion -Wdouble-promotion -Wformat=2 -Wundef -Wpointer-arith \
+	-Wcast-qual -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes
+endif
+
+# Optional sanitizers for runtime checks
+ifdef ROGUE_SANITIZE
+CFLAGS+=-fsanitize=address,undefined -fno-omit-frame-pointer
+LDLIBS+=-fsanitize=address,undefined
+endif
 
 # New defines: ROGUE_*
 ifdef ROGUE_RELEASE

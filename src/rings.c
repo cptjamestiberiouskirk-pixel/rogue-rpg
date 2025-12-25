@@ -8,6 +8,141 @@
 #include "curses.h"
 
 static int	gethand(void);
+static void apply_ring_effect(THING *obj);
+static int ring_power(const THING *ring);
+
+static void apply_ring_effect(THING *obj)
+{
+	if (obj == NULL)
+		return;
+
+	switch (obj->o_which) {
+	case R_ADDSTR:
+		chg_str(obj->o_ac);
+		break;
+	case R_SEEINVIS:
+		invis_on();
+		break;
+	case R_AGGR:
+		aggravate();
+		break;
+	default:
+		break;
+	}
+}
+
+static int
+ring_power(const THING *ring)
+{
+	if (ring == NULL)
+		return -1000;
+
+	int score = 0;
+
+	switch (ring->o_which) {
+	case R_ADDSTR:
+		score = 60 + ring->o_ac * 12;
+		break;
+	case R_ADDDAM:
+		score = 55 + ring->o_ac * 10;
+		break;
+	case R_ADDHIT:
+		score = 50 + ring->o_ac * 8;
+		break;
+	case R_PROTECT:
+		score = 50 + ring->o_ac * 10;
+		break;
+	case R_REGEN:
+		score = 45;
+		break;
+	case R_DIGEST:
+		score = 35;
+		break;
+	case R_SEARCH:
+		score = 30;
+		break;
+	case R_SEEINVIS:
+		score = 28;
+		break;
+	case R_SUSTSTR:
+	case R_SUSTARM:
+		score = 32;
+		break;
+	case R_STEALTH:
+		score = 34;
+		break;
+	case R_NOP:
+		score = 5;
+		break;
+	case R_TELEPORT:
+	case R_AGGR:
+		score = -150;
+		break;
+	default:
+		score = 0;
+		break;
+	}
+
+	if (ring->o_flags & ISCURSED)
+		score -= 150;
+
+	return score;
+}
+
+bool
+auto_equip_ring(THING *obj, bool silent)
+{
+	if (obj == NULL || obj->o_type != RING)
+		return FALSE;
+	if (obj->o_flags & ISCURSED)
+		return FALSE;
+
+	int target_hand = -1;
+	const int new_power = ring_power(obj);
+
+	if (cur_ring[LEFT] == NULL && cur_ring[RIGHT] == NULL) {
+		if (new_power >= 0)
+			target_hand = LEFT;
+	}
+	else if (cur_ring[LEFT] == NULL) {
+		if (new_power >= 0)
+			target_hand = LEFT;
+	}
+	else if (cur_ring[RIGHT] == NULL) {
+		if (new_power >= 0)
+			target_hand = RIGHT;
+	}
+	else {
+		int left_power = ring_power(cur_ring[LEFT]);
+		int right_power = ring_power(cur_ring[RIGHT]);
+		int worst_hand = (left_power <= right_power) ? LEFT : RIGHT;
+		if (new_power > ring_power(cur_ring[worst_hand])) {
+			THING *replaced = cur_ring[worst_hand];
+			if (!can_drop(replaced))
+				return FALSE;
+			target_hand = worst_hand;
+		} else {
+			return FALSE;
+		}
+	}
+
+	if (target_hand < 0)
+		return FALSE;
+
+	if (cur_ring[target_hand] != NULL) {
+		if (!can_drop(cur_ring[target_hand]))
+			return FALSE;
+	}
+
+	cur_ring[target_hand] = obj;
+	apply_ring_effect(obj);
+	update_armor_class();
+	if (!silent) {
+		msg("Auto-equipped %s on %s hand!", inv_name(obj, TRUE),
+			target_hand == LEFT ? "left" : "right");
+	}
+	return TRUE;
+}
 
 /*
  * ring_on:
@@ -47,21 +182,8 @@ ring_on()
 		goto no_ring;
 	}
 	cur_ring[ring] = obj;
-
-	/*
-	 * Calculate the effect it has on the poor guy.
-	 */
-	switch (obj->o_which) {
-	case R_ADDSTR:
-		chg_str(obj->o_ac);
-		break;
-	case R_SEEINVIS:
-		invis_on();
-		break;
-	case R_AGGR:
-		aggravate();
-		break;
-	}
+	apply_ring_effect(obj);
+	update_armor_class();
 
 	msg("%swearing %s (%c)", noterse("you are now "),
 		inv_name(obj, TRUE), pack_char(obj));

@@ -76,7 +76,8 @@ reread:
 
 	if (noscore != TRUE)
 	{
-		strcpy(his_score.sc_name,whoami);
+		strncpy(his_score.sc_name, whoami, sizeof(his_score.sc_name) - 1);
+		his_score.sc_name[sizeof(his_score.sc_name) - 1] = '\0';
 		his_score.sc_gold = amount;
 		his_score.sc_fate = flags ? flags : monst;
 		his_score.sc_level = max_level;

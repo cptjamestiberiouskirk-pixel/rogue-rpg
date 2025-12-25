@@ -251,7 +251,9 @@ execcom()
 					msg("you found %s",
 						tr_name(flat(lookat.y, lookat.x) & F_TMASK));
 			}
-		when 'o': after = FALSE; msg("i don't have any options, oh my!");
+		when 'o':
+			after = FALSE;
+			show_message_log();
 		when CTRL('L'):
 			after = FALSE;
 			msg("the screen looks fine to me (jll was here)");

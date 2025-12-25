@@ -232,10 +232,12 @@ char *
 num(int n1, int n2, char type)
 {
 	static char numbuf[10];
-
-	sprintf(numbuf, "%s%d", n1 < 0 ? "" : "+", n1);
-	if (type == WEAPON)
-		sprintf(&numbuf[strlen(numbuf)], ",%s%d", n2 < 0 ? "" : "+", n2);
+	int written;
+	
+	//@ safe snprintf with remaining buffer tracking
+	written = snprintf(numbuf, sizeof(numbuf), "%s%d", n1 < 0 ? "" : "+", n1);
+	if (type == WEAPON && written >= 0 && written < (int)sizeof(numbuf))
+		snprintf(&numbuf[written], sizeof(numbuf) - written, ",%s%d", n2 < 0 ? "" : "+", n2);
 	return numbuf;
 }
 

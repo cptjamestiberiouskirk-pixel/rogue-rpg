@@ -1,5 +1,6 @@
 TARGET:=splash
 CFLAGS?=-Wall -Wextra -std=c11 -pedantic -Og -g
+LDFLAGS?=
 LDLIBS:=
 
 # --silence-errors only needed for 'make clean' from parent dir
@@ -13,7 +14,7 @@ all: default
 default: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) $(LDLIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -o $@
 
 clean:
 	rm -f $(TARGET) *.o

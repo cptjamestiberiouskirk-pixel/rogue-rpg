@@ -147,7 +147,12 @@ look(bool wakeup)
 				}
 			}
 
-			if ((ch!=PASSAGE) && (*fp & (F_PASS | F_MAZE)))
+			bool threat_colored = FALSE;
+			if (tp != NULL && see_monst(tp)) {
+				threat_apply_color(monster_threat_level(tp));
+				threat_colored = TRUE;
+			}
+			if (!threat_colored && (ch!=PASSAGE) && (*fp & (F_PASS | F_MAZE)))
 				/*
 				 * The current character used for IBM ARMOR doesn't
 				 * look right in Inverse

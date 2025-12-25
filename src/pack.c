@@ -240,6 +240,8 @@ picked_up:
 			cur_armor = obj;
 			msg("Auto-equipped %s!", inv_name(obj, TRUE));
 		}
+	} else if (obj->o_type == RING) {
+		auto_equip_ring(obj, silent);
 	}
 }
 

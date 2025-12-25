@@ -356,6 +356,14 @@ typedef enum { MA_NONE, MA_VAMPIRIC, MA_THORNS, MA_TELEPORTER } MonsterAffix;
 
 extern ClassType player_class;
 
+typedef enum {
+	THREAT_EASY,
+	THREAT_EVEN,
+	THREAT_DANGEROUS,
+	THREAT_VERY_DANGEROUS,
+	THREAT_IMPOSSIBLE
+} threat_level_t;
+
 /*
  * Now we define the structures and types
  */
@@ -693,6 +701,8 @@ void	remove_monster(coord *mp, THING *tp, bool waskill);
 void	killed(THING *tp, bool pr);
 int	str_plus(str_t str);
 int	add_dam(str_t str);
+threat_level_t	monster_threat_level(const THING *monster);
+void	threat_apply_color(threat_level_t level);
 
 //@ init.c
 void	init_player(void);
@@ -714,6 +724,7 @@ void	addmsg(const char *fmt, ...);
 void	doadd(const char *fmt, va_list argp);
 void	wait_msg(const char *msg);
 void	endmsg(void);
+void	show_message_log(void);
 void	more(char *msg);
 void	putmsg(int msgline, char *msg);
 void	scrlmsg(int msgline, char *str1, char *str2);
@@ -848,8 +859,9 @@ void	protect(int drive);
 //@ rings.c
 void	ring_on(void);
 void	ring_off(void);
+int	ring_eat(int hand);
 char	*ring_num(THING *obj);
-int	ring_eat();
+bool	auto_equip_ring(THING *obj, bool silent);
 
 //@ rip.c
 void	score(int amount, int flags, char monst);

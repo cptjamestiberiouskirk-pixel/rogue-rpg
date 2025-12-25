@@ -92,9 +92,9 @@ main(argc, argv)
 					 savfile = s_save;
 					 break;
 				case 's': case 'S':
-					winit();
 					noscore = TRUE;
 					is_saved = TRUE;
+					winit();
 					score(0,0,0);
 					fatal("");
 					break;
@@ -146,12 +146,16 @@ main(argc, argv)
 			}
 		}
 
+		/*
+		 * Initialize wand/staff materials BEFORE player init,
+		 * since Sorcerer loadout calls fix_stick() which reads ws_type[]
+		 */
+		init_materials();			/* Set up materials of wands */
 		init_player();			/* Set up initial player stats */
 		init_things();			/* Set up probabilities of things */
 		init_names();			/* Set up names of scrolls */
 		init_colors();			/* Set up colors of potions */
 		init_stones();			/* Set up stone settings of rings */
-		init_materials();			/* Set up materials of wands */
 		setup();
 		drop_curtain();
 		new_level();			/* Draw current level */

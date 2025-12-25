@@ -3,6 +3,7 @@
  */
 
 #include	"extern.h"
+#include	"rogue.h"
 
 #ifndef ROGUE_DOS_CURSES
 
@@ -1711,7 +1712,7 @@ winit(void)
 	setenv("ESCDELAY", "25", FALSE);
 	initscr();
 	init_curses = TRUE;
-	if ((LINES < cur_LINES) || (COLS < cur_COLS))
+	if (!noscore && ((LINES < cur_LINES) || (COLS < cur_COLS)))
 	{
 		fatal("%u-column mode requires at least a %u x %u screen\n"
 				"Your terminal size is %u x %u\n",

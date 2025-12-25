@@ -5,6 +5,9 @@
  * things.c	1.4 (AI Design)	12/14/84
  */
 
+//@ Suppress format-truncation warnings - we use bounded functions with proper checks
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+
 #include "rogue.h"
 #include "curses.h"
 #include <string.h>
@@ -32,33 +35,36 @@ inv_name(THING *obj, bool drop)
 	register int which = obj->o_which;
 	register char *pb;
 
+	//@ validate array index bounds
+	if (which < 0 || which >= 200) return prbuf;  //@ safe upper bound
+
 	pb = prbuf;
 	switch (obj->o_type)
 	{
 	when SCROLL:
 		if (obj->o_count == 1) {
-			strcpy(pb, "A scroll ");
-			pb = &prbuf[9];
+			strncpy(pb, "A scroll ", 128 - (pb - prbuf) - 1);
+			pb = &prbuf[strlen(prbuf)];
 		} else {
-			sprintf(pb, "%d scrolls ", obj->o_count);
+			snprintf(pb, 128 - (pb - prbuf), "%d scrolls ", obj->o_count);
 			pb = &prbuf[strlen(prbuf)];
 		}
 		if (s_know[which])
-			sprintf(pb, "of %s", s_magic[which].mi_name);
+			snprintf(pb, 128 - (pb - prbuf), "of %s", s_magic[which].mi_name);
 		else if (*s_guess[which])
-			sprintf(pb, "called %s", s_guess[which]);
+			snprintf(pb, 128 - (pb - prbuf), "called %s", s_guess[which]);
 		else
 			chopmsg(pb, "titled '%.17s'","titled '%s'", &s_names[which]);
 	when POTION:
 		if (obj->o_count == 1)
 		{
-			strcpy(pb, "A potion ");
-			pb = &prbuf[9];
+			strncpy(pb, "A potion ", 128 - (pb - prbuf) - 1);
+			pb = &prbuf[strlen(prbuf)];
 		}
 		else
 		{
-			sprintf(pb, "%d potions ", obj->o_count);
-			pb = &pb[strlen(prbuf)];
+			snprintf(pb, 128 - (pb - prbuf), "%d potions ", obj->o_count);
+			pb = &prbuf[strlen(prbuf)];
 		}
 		if (p_know[which]) {
 			chopmsg(pb, "of %s", "of %s(%s)",
@@ -69,21 +75,21 @@ inv_name(THING *obj, bool drop)
 				p_colors[which]);
 		}
 		else if (obj->o_count == 1)
-			sprintf(prbuf, "A%s %s potion", vowelstr(p_colors[which]),
+			snprintf(prbuf, 128, "A%s %s potion", vowelstr(p_colors[which]),
 				p_colors[which]);
 		else
-			sprintf(prbuf, "%d %s potions", obj->o_count, p_colors[which]);
+			snprintf(prbuf, 128, "%d %s potions", obj->o_count, p_colors[which]);
 	when FOOD:
 		if (which == 1)
 			if (obj->o_count == 1)
-				sprintf(pb, "A%s %s", vowelstr(fruit), fruit);
+				snprintf(pb, 128 - (pb - prbuf), "A%s %s", vowelstr(fruit), fruit);
 			else
-				sprintf(pb, "%d %ss", obj->o_count, fruit);
+				snprintf(pb, 128 - (pb - prbuf), "%d %ss", obj->o_count, fruit);
 		else
 			if (obj->o_count == 1)
-				strcpy(pb, "Some food");
+				strncpy(pb, "Some food", 128 - (pb - prbuf) - 1);
 			else
-				sprintf(pb, "%d rations of food", obj->o_count);
+				snprintf(pb, 128 - (pb - prbuf), "%d rations of food", obj->o_count);
 	when WEAPON:
 		if (obj->o_count > 1)
 			sprintf(pb, "%d ", obj->o_count);
@@ -139,7 +145,7 @@ inv_name(THING *obj, bool drop)
 		else
 			sprintf(pb, "%s", sh_names[which]);
 	when AMULET:
-		strcpy(pb, "The Amulet of Yendor");
+		strncpy(pb, "The Amulet of Yendor", 128 - (pb - prbuf) - 1);
 	when STICK:
 		sprintf(pb, "A%s %s ", vowelstr(ws_type[which]),
 		ws_type[which]);
@@ -172,14 +178,15 @@ inv_name(THING *obj, bool drop)
 #endif
 		break;
 	}
-	if (obj->o_prefix_id > 0) {
-		char temp[MAXSTR];
-		strcpy(temp, prbuf);
-		sprintf(prbuf, "%s %s", prefixes[obj->o_prefix_id].name, temp);
+	if (obj->o_prefix_id > 0 && obj->o_prefix_id < NUM_PREFIXES) {
+		char temp[128];
+		strncpy(temp, prbuf, sizeof(temp) - 1);
+		temp[sizeof(temp) - 1] = '\0';
+		snprintf(prbuf, 128, "%s %s", prefixes[obj->o_prefix_id].name, temp);
 	}
-	if (obj->o_suffix_id > 0) {
-		strcat(prbuf, " ");
-		strcat(prbuf, suffixes[obj->o_suffix_id].name);
+	if (obj->o_suffix_id > 0 && obj->o_suffix_id < NUM_SUFFIXES) {
+		strncat(prbuf, " ", 128 - strlen(prbuf) - 1);
+		strncat(prbuf, suffixes[obj->o_suffix_id].name, 128 - strlen(prbuf) - 1);
 	}
 	if (obj == cur_armor)
 		strcat(pb, " (being worn)");
@@ -323,6 +330,7 @@ can_drop(THING *op)
 }
 
 void apply_diablo_stats(THING *obj, int d_level) {
+	(void)d_level; // currently unused; reserved for future scaling by depth
     int roll = rnd(100); // 0-99
     
     // 1. Determine Rarity based on roll

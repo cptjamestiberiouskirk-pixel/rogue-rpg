@@ -75,23 +75,19 @@ save_game()
 	if (terse)
 		addstr("Save file ? ");
 	else
-		printw("Save file (press enter (\x11\xd9) to default to \"%s\") ? ",
-				s_save );
-	/*@
-	 * FIXME
-	 * Previous message length + 19 input chars > 80 columns, message will
-	 * wrap to 2nd line, overwriting the dungeon. This bug happened in
-	 * original too, if "savefile" entry in ROGUE.OPT had length 14.
-	 * Not a problem if save is successful, as game will exit afterwards,
-	 * but in case of any non-fatal error dungeon will be corrupt.
-	 *
-	 * In any case, this UI must be redesigned for filenames beyond DOS 8+3.
-	 * Possible approach: save 2nd line, use it for input (80/40 char limit
-	 * is acceptable), then restore line on errors.
-	 */
+		printw("Save file (press enter to default to \"%s\") ? ", s_save);
+	//@ FIXME: Previous message length + 19 input chars may wrap to 2nd line.
+	//@ Proper fix: constrain input length, save/restore screen line, or use popup UI.
 	retcode = getinfo(savename,19);
 	if (*savename == 0)
 		strcpy(savename,s_save);
+	
+	//@ validate savename to prevent path traversal attacks
+	if (strchr(savename, '/') != NULL || strchr(savename, '\\') != NULL) {
+		msg("Error: invalid filename (path separators not allowed)");
+		return;
+	}
+	
 	msg("");
 	mpos = 0;
 	if (retcode != ESCAPE)

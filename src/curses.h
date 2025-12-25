@@ -24,28 +24,73 @@
 
 //@ Original macros
 #define	wclear	clear
+#ifdef mvwaddch
+#undef mvwaddch
+#endif
 #define mvwaddch(w,a,b,c)	mvaddch(a,b,c)
+#ifdef getyx
+#undef getyx
+#endif
 #define getyx(a,b,c)	getxy(&b,&c)
 #define getxy	getrc
 
 //@ Modified macros
+#ifdef inch
+#undef inch
+#endif
 #define inch	cur_inch
+#ifdef standend
+#undef standend
+#endif
 #define standend	cur_standend
+#ifdef standout
+#undef standout
+#endif
 #define standout	cur_standout
 #define endwin	cur_endwin
 
 //@ Function mappings
 #define beep	cur_beep
+#ifdef move
+#undef move
+#endif
 #define move	cur_move
+#ifdef clear
+#undef clear
+#endif
 #define clear	cur_clear
+#ifdef clrtoeol
+#undef clrtoeol
+#endif
 #define clrtoeol	cur_clrtoeol
+#ifdef mvaddstr
+#undef mvaddstr
+#endif
 #define mvaddstr	cur_mvaddstr
+#ifdef mvaddch
+#undef mvaddch
+#endif
 #define mvaddch	cur_mvaddch
+#ifdef mvinch
+#undef mvinch
+#endif
 #define mvinch	cur_mvinch
+#ifdef addch
+#undef addch
+#endif
 #define addch	cur_addch
+#ifdef addstr
+#undef addstr
+#endif
 #define addstr	cur_addstr
+#ifdef box
+#undef box
+#endif
 #define box	cur_box
 #define printw	cur_printw
+#ifdef getch
+#undef getch
+#endif
 #define getch	cur_getch  //@ no longer used
 #define getch_timeout	cur_getch_timeout
 

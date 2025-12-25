@@ -7,6 +7,173 @@
 #include "rogue.h"
 #include "curses.h"
 
+static int last_player_damage = 0;
+static int last_monster_damage = 0;
+
+static int	parse_average_damage(const char *dice);
+static int	player_offense_score(void);
+static int	player_defense_score(void);
+static int	monster_offense_score(const THING *monster);
+static int	monster_defense_score(const THING *monster);
+static int	player_power_score(void);
+static int	monster_power_score(const THING *monster);
+static threat_level_t	assess_threat(const THING *monster);
+static const char	*threat_label(threat_level_t level);
+static void	apply_threat_color(threat_level_t level);
+
+static int
+parse_average_damage(const char *dice)
+{
+	int total = 0;
+	const char *cursor = dice;
+
+	if (dice == NULL)
+		return 0;
+
+	while (cursor != NULL && *cursor != '\0') {
+		int count = atoi(cursor);
+		const char *d = strchr(cursor, 'd');
+		if (count <= 0 || d == NULL)
+			break;
+		int sides = atoi(d + 1);
+		if (sides <= 0)
+			break;
+		total += count * (sides + 1) / 2;
+		const char *next = strchr(d, '/');
+		if (next == NULL)
+			break;
+		cursor = next + 1;
+	}
+	return total;
+}
+
+static int
+player_offense_score(void)
+{
+	const char *damage_str = player.t_stats.s_dmg;
+	int base = 0;
+	int bonus = add_dam(pstats.s_str);
+
+	if (cur_weapon != NULL && cur_weapon->o_damage != NULL)
+		damage_str = cur_weapon->o_damage;
+	base = parse_average_damage(damage_str);
+	if (cur_weapon != NULL)
+		base += cur_weapon->o_dplus;
+	if (ISRING(LEFT, R_ADDDAM))
+		base += cur_ring[LEFT]->o_ac;
+	if (ISRING(RIGHT, R_ADDDAM))
+		base += cur_ring[RIGHT]->o_ac;
+	if (base < 1)
+		base = 1;
+	return base + bonus;
+}
+
+static int
+player_defense_score(void)
+{
+	int effective_ac = 10 - pstats.s_arm;
+	if (effective_ac < 0)
+		effective_ac = 0;
+	return max_hp + effective_ac * 2;
+}
+
+static int
+monster_offense_score(const THING *monster)
+{
+	if (monster == NULL)
+		return 0;
+	int base = parse_average_damage(monster->t_stats.s_dmg);
+	if (base < 1)
+		base = 1;
+	return base + monster->t_stats.s_lvl;
+}
+
+static int
+monster_defense_score(const THING *monster)
+{
+	if (monster == NULL)
+		return 0;
+	int effective_ac = 10 - monster->t_stats.s_arm;
+	if (effective_ac < 0)
+		effective_ac = 0;
+	return monster->t_stats.s_maxhp + effective_ac * 2;
+}
+
+static int
+player_power_score(void)
+{
+	return player_offense_score() * 4 + player_defense_score();
+}
+
+static int
+monster_power_score(const THING *monster)
+{
+	return monster_offense_score(monster) * 4 + monster_defense_score(monster);
+}
+
+static threat_level_t
+assess_threat(const THING *monster)
+{
+	int player_score = max(player_power_score(), 1);
+	int monster_score = monster_power_score(monster);
+	int ratio;
+
+	if (monster_score <= 0)
+		return THREAT_EASY;
+
+	ratio = (monster_score * 100) / player_score;
+	if (ratio <= 60)
+		return THREAT_EASY;
+	if (ratio <= 100)
+		return THREAT_EVEN;
+	if (ratio <= 140)
+		return THREAT_DANGEROUS;
+	if (ratio <= 180)
+		return THREAT_VERY_DANGEROUS;
+	return THREAT_IMPOSSIBLE;
+}
+
+static const char *
+threat_label(threat_level_t level)
+{
+	switch (level) {
+	case THREAT_EASY:
+		return "easy";
+	case THREAT_EVEN:
+		return "evenly matched";
+	case THREAT_DANGEROUS:
+		return "dangerous";
+	case THREAT_VERY_DANGEROUS:
+		return "very dangerous";
+	case THREAT_IMPOSSIBLE:
+	default:
+		return "impossible";
+	}
+}
+
+static void
+apply_threat_color(threat_level_t level)
+{
+	switch (level) {
+	case THREAT_EASY:
+		cur_standend();
+		break;
+	case THREAT_EVEN:
+		yellow();
+		break;
+	case THREAT_DANGEROUS:
+		blue();
+		break;
+	case THREAT_VERY_DANGEROUS:
+		lred();
+		break;
+	case THREAT_IMPOSSIBLE:
+	default:
+		red();
+		break;
+	}
+}
+
 /*
  * fight:
  *	The player attacks the monster.
@@ -109,7 +276,7 @@ attack(THING *mp)
 	if (on(player, ISBLIND))
 		mname = it;
 	if (roll_em(mp, &player, NULL, FALSE)) {
-		hit(mname, NULL, NULL);
+		hit(mname, NULL, mp);
 		if (pstats.s_hpt <= 0)
 			death(mp->t_type);	/* Bye bye life ... */
 		if (!on(*mp, ISCANC))
@@ -397,6 +564,7 @@ roll_em(THING *thatt, THING *thdef, THING *weap, bool hurl)
 		if (ISRING(RIGHT, R_PROTECT))
 			def_arm -= cur_ring[RIGHT]->o_ac;
 	}
+	int total_damage = 0;
 	for (;;)
 	{
 		ndice = atoi(cp);
@@ -422,13 +590,19 @@ roll_em(THING *thatt, THING *thdef, THING *weap, bool hurl)
 				 */
 				if (thdef == &player)
 					damage *= hit_mul;
-			def->s_hpt -= max(0, damage);
+			int applied = max(0, damage);
+			def->s_hpt -= applied;
+			total_damage += applied;
 			did_hit = TRUE;
 		}
 		if ((cp = stpchr(cp, '/')) == NULL)
 			break;
 		cp++;
 	}
+	if (thatt == &player)
+		last_player_damage = total_damage;
+	if (thdef == &player)
+		last_monster_damage = total_damage;
 	return did_hit;
 }
 
@@ -474,12 +648,24 @@ hit(char *er, char *ee, THING *monster)
 		break;
 	}
 	if (er == 0 && monster) {  // Player hitting monster
-		msg("%s%s (HP: %d/%d)", s, prname(ee, FALSE), monster->t_stats.s_hpt, monster->t_stats.s_maxhp);
+		threat_level_t danger = monster_threat_level(monster);
+		threat_apply_color(danger);
+		msg("%s%s (HP: %d/%d, Damage: %d) [%s]", s, prname(ee, FALSE),
+			monster->t_stats.s_hpt, monster->t_stats.s_maxhp,
+			last_player_damage, threat_label(danger));
+		cur_standend();
 		// Teleporter Affix: Evasive
 		if (monster->t_affix == MA_TELEPORTER && rnd(100) < 25) {
 			rnd_pos(&rooms[rnd_room()], &monster->t_pos);
 			msg("The monster teleports away!");
 		}
+	} else if (monster && ee == NULL) { // Monster hitting player
+		threat_level_t danger = monster_threat_level(monster);
+		threat_apply_color(danger);
+		msg("%s%s (HP: %d/%d, Damage Taken: %d) [%s]", s,
+			prname(ee, FALSE), pstats.s_hpt, max_hp,
+			last_monster_damage, threat_label(danger));
+		cur_standend();
 	} else {
 		msg("%s%s", s, prname(ee, FALSE));
 	}
@@ -582,6 +768,18 @@ add_dam(str_t str)
 	if (str < 16)
 		add--;
 	return add;
+}
+
+threat_level_t
+monster_threat_level(const THING *monster)
+{
+	return assess_threat(monster);
+}
+
+void
+threat_apply_color(threat_level_t level)
+{
+	apply_threat_color(level);
 }
 
 /*

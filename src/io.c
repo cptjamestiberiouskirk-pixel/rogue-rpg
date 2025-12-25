@@ -15,6 +15,16 @@
  */
 static int newpos = 0;
 
+#define MSG_LOG_SIZE 100
+
+static char message_log[MSG_LOG_SIZE][BUFSIZE];
+static int message_log_start = 0;
+static int message_log_count = 0;
+
+static void message_log_store(const char *msg);
+static int message_log_slot(int index);
+static const char *message_log_get(int index);
+
 /* VARARGS1 */
 /*@ nope, it was not vargars. But now it is */
 void
@@ -102,6 +112,7 @@ endmsg(void)
 	 */
 	if (is_lower(msgbuf[0]) && msgbuf[1] != ')')
 		msgbuf[0] = toupper(msgbuf[0]);
+	message_log_store(msgbuf);
 	putmsg(0,msgbuf);
 	mpos = newpos;
 	newpos = 0;
@@ -185,6 +196,38 @@ doadd(const char *fmt, va_list argp)
 	newpos = strlen(msgbuf);
 }
 
+static void
+message_log_store(const char *msg)
+{
+	int slot;
+
+	if (msg == NULL || *msg == '\0')
+		return;
+
+	if (message_log_count < MSG_LOG_SIZE) {
+		slot = message_log_slot(message_log_count);
+		message_log_count++;
+	} else {
+		message_log_start = message_log_slot(1);
+		slot = message_log_slot(message_log_count - 1);
+	}
+
+	strncpy(message_log[slot], msg, BUFSIZE - 1);
+	message_log[slot][BUFSIZE - 1] = '\0';
+}
+
+static int
+message_log_slot(int index)
+{
+	return (message_log_start + index) % MSG_LOG_SIZE;
+}
+
+static const char *
+message_log_get(int index)
+{
+	return message_log[message_log_slot(index)];
+}
+
 /*
  * putmsg:
  *  put a msg on the line, make sure that it will fit, if it won't
@@ -220,6 +263,89 @@ putmsg(msgline,msg)
 			} while (1);
 		}
 	} while (curlen > COLS);
+}
+
+/*
+ * show_message_log:
+ *	Display recent messages with scrolling support
+ */
+void
+show_message_log(void)
+{
+	int total = message_log_count;
+	int top;
+	int lines_per_page;
+	bool done = FALSE;
+
+	wdump();
+	clear();
+
+	lines_per_page = LINES - 4;
+	if (lines_per_page < 1)
+		lines_per_page = 1;
+
+	if (total == 0) {
+		mvaddstr(0, 0, "Event log is empty.");
+		mvaddstr(2, 0, "Press space to continue.");
+		cur_refresh();
+		for (;;) {
+			int ch = readchar();
+			if (ch == ' ' || ch == 'q' || ch == ESCAPE)
+				break;
+		}
+		wrestor();
+		cur_refresh();
+		return;
+	}
+
+	top = (total > lines_per_page) ? total - lines_per_page : 0;
+
+	while (!done) {
+		int row;
+		int idx;
+		int limit = min(total, top + lines_per_page);
+
+		clear();
+		move(0, 0);
+		printw("Event Log (last %d entries)", MSG_LOG_SIZE);
+		mvaddstr(1, 0, "k: older  j: newer  b: page up  f: page down  space/q: exit");
+
+		for (row = 0, idx = top; idx < limit; row++, idx++) {
+			const char *entry = message_log_get(idx);
+			int sequence = total - idx;
+			move(row + 2, 0);
+			printw("%3d %s", sequence, entry);
+		}
+
+		cur_refresh();
+		switch (readchar()) {
+		case 'k':
+			if (top > 0)
+				top--;
+			break;
+		case 'j':
+			if (top + lines_per_page < total)
+				top++;
+			break;
+		case 'b':
+			top = max(0, top - lines_per_page);
+			break;
+		case 'f':
+			if (top + lines_per_page < total)
+				top = min(total - lines_per_page, top + lines_per_page);
+			break;
+		case 'q':
+		case ' ':
+		case ESCAPE:
+			done = TRUE;
+			break;
+		default:
+			break;
+		}
+	}
+
+	wrestor();
+	cur_refresh();
 }
 
 /*
@@ -287,28 +413,49 @@ void
 status(void)
 {
 	int oy, ox;
-	static int s_lvl;
+	static int last_lvl = -1;
+	static int last_hp = -1;
+	static int last_maxhp = -1;
+	static str_t last_str = (str_t)-1;
+	static str_t last_maxstr = (str_t)-1;
+	static int last_ac = -999;
+	static int last_slvl = -1;
+	static int last_purse = -1;
+	static long last_exp = -1L;
 
 	SIG2();
 
 	getyx(stdscr, oy, ox);
-	if (is_color)
-		yellow();
+	/* Only redraw if any displayed field changed */
+	if (last_lvl != level || last_hp != pstats.s_hpt || last_maxhp != max_hp ||
+		last_str != pstats.s_str || last_maxstr != max_stats.s_str ||
+		last_ac != pstats.s_arm || last_exp != pstats.s_exp ||
+		last_slvl != pstats.s_lvl || last_purse != purse) {
+		if (is_color)
+			yellow();
 
 	/*
 	 * Level:
 	 */
-	if (s_lvl != level)
-	{
-		s_lvl = level;
 		move(PT(22,23),0);
 		printw("Lvl:%d  HP:%d/%d  Str:%d(%d)  AC:%d  Exp:%ld/%ld  Gold:%d",
 			level, pstats.s_hpt, max_hp, pstats.s_str, max_stats.s_str,
 			pstats.s_arm, pstats.s_exp, e_levels[pstats.s_lvl], purse);
-	}
 
-	if (is_color)
-		standend();
+		if (is_color)
+			standend();
+
+		/* Snapshot current values */
+		last_lvl = level;
+		last_hp = pstats.s_hpt;
+		last_maxhp = max_hp;
+		last_str = pstats.s_str;
+		last_maxstr = max_stats.s_str;
+		last_ac = pstats.s_arm;
+		last_exp = pstats.s_exp;
+		last_slvl = pstats.s_lvl;
+		last_purse = purse;
+	}
 
 	move(oy, ox);
 }
