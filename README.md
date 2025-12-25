@@ -1,11 +1,13 @@
-RoguePC
+Rogue: Diablo Edition
 ===============================================================================
 
-## Original DOS Epyx Rogue (1985) ported to modern PCs!
+## A Total Conversion of the Classic 1985 Rogue into a Modern Action-RPG!
 
 ![Title Screen](screenshots/title.png)![Level 1, fully explored](screenshots/level1.png)
 
 <sup>*(Yes, these are actual in-game screenshots using `xterm` with the custom font)*</sup>
+
+A total conversion of the classic 1985 Rogue, grafting modern Action-RPG mechanics onto the original codebase. This version features playable classes, a Diablo-style loot system with prefixes/suffixes, elite boss encounters, and modern quality-of-life improvements.
 
 - Uses original source code from 1985, adapted to compile in modern PCs.
     - All comments from original authors preserved.
@@ -21,10 +23,36 @@ RoguePC
     - [Single UNIX Specification, Version 4 (SUSv4)](https://unix.org/version4/), includes POSIX and Curses.
 - Runs in any terminal, text-only, using nothing but `curses`, just like the original.
 - Colors and gameplay intact.
-- Non-ASCII characters updaded from DOS CP437 to suitable Unicode codepoints.
+- Non-ASCII characters updated from DOS CP437 to suitable Unicode codepoints.
 
 ![Game over screen](screenshots/rip.png)
 <sup>*(Better get used to, you'll see this... a **lot**)*</sup>
+
+---
+
+### Features
+
+#### Class System
+Choose your playstyle at the start:
+- **Warrior:** Tanky, starts with Ring Mail & Two-Handed Sword.
+- **Rogue:** High Crit, starts with Bow, Arrows, & Dagger.
+- **Sorcerer:** Magic expert, starts with Wands & Scrolls.
+
+#### Loot 2.0
+- **Rarity:** Items drop as Common (White), Magic (Cyan), Rare (Yellow), or Legendary (Magenta).
+- **Affixes:** Procedural generation creates items like "Vampiric Long Sword of the Bear" or "Rusty Mace of Weakness".
+
+#### Modern Interface
+- **Smart HUD:** Enemy HP bars (e.g., "HP: 5/20") and a unified status line showing all stats.
+- **Auto-Equip:** Automatically equips gear that is statistically better than your current loadout.
+
+#### Combat Depth
+- **Elite Monsters:** 20% chance for monsters to spawn as Bosses with 3x HP.
+- **Monster Abilities:** Bosses have unique affixes: **Vampiric** (Life Steal), **Thorns** (Reflect Dmg), or **Teleporter**.
+
+---
+
+### Installation and Usage
 
 For latest Debian / Ubuntu systems:
 ```sh
@@ -52,7 +80,6 @@ make ROGUE_CHARSET=1
 For Ubuntu 18.04, use `libncursesw5-dev` instead of `libncurses-dev`, or
 `libncurses5-dev` for ASCII mode.
 
-
 Strongly suggested:
 
 - Install the custom `PerfectDOSVGA437Unicode.ttf` font. See [tools](tools/)
@@ -73,21 +100,6 @@ Strongly suggested:
 
 #### Compile/Build time:
 
-**All** original compile-time environment vars and `-D`efines used as `#ifdef`s in code are preserved!
-However, some of them were aready non-functional and only partially implemented in the original code.
-They are still _untested_ and for now _unsupported_ in this modern port, so many will not work.
-Hightlights include: _(not a comprehensive list)_
-- `DEMO`: Demonstration mode, with gameplay restrictions.
-- `DEBUG`: Debug mode, for testing.
-- `WIZARD`: "God" mode, with extra commands.
-- `INTL`: International release, with different credits.
-- `ME`: Be the author!
-- `LUXURY`: In 1985, this meant a UNIX machine with an extended C library.
-- `MINROG`: Set by default in the original `Makefile`, enables the winning message.
-
-The new definitions are all prefixed with `ROGUE_`:
-
-In the `Makefile`, in rough order or importance:
 - `ROGUE_CHARSET`: The character set / encoding used by the game. Valid values are:
     - `1`: Plain ASCII. Looks like Rogue UNIX, but with color. Only requires `ncurses`.
     - `2`: Original CP437, as used in DOS. Requires `ncurses`, a terminal capable of handling it,
@@ -96,27 +108,17 @@ In the `Makefile`, in rough order or importance:
 - `ROGUE_NO_X11`: If set, do not use X11/XLib to query the keyboard for NumLock status.
     Unset by default, so `x11` libs are required to compile.
     Only used at run-time if actually running in an X11 terminal emulator.
-    If on a TTY such as getty / linux console, it tries to query `/dev/tty`
-- `ROGUE_RELEASE`: Just sets the additional `CFLAGS` `-s` and `-O2`,
-    otherwise it sets `-Og` and `-g3`. No in-game effect.
-- `ROGUE_DEBUG`: Enable some in-game debugging messages.
-    It disrupts the `curses` display, so the game become somewhat unplayable.
-- `ROGUE_DEMO`: Sets `DEMO` for the original Demo mode.
-
-Only in code, most for internal use and to control the emulated hardware reported to the game:
-- `ROGUE_DOS_CURSES`: Use the original `curses` implementation instead of the system `ncurses`.
-    As the 1985 `curses` rely heavily on DOS interrupts, this is unplayable and only for historical / testing purposes.
 - `ROGUE_WIDECHAR`: Set if using Unicode charset to invoke the wide char functions in `ncursesw`.
 - `ROGUE_SCR_TYPE`: The screen type, or more accurately the mode of the graphics adapter.
     `3` by default, meaning _Text, 80x25, color_. Untested with any other value, but the game
-    did adjuste itself for monochrome and other modes.
+    did adjust itself for monochrome and other modes.
 - `ROGUE_DOS_SCREEN`: If set, uses a DOS interrupt at run-time to determine the above,
     as done by the original in 1985. As DOS interrupts were stubbed, will result in an untested value.
 - `ROGUE_COLUMNS`: Columns of the video adapter. Should be tied with the above `ROGUE_SCR_TYPE`.
     Defaults to `80` and untested with any other value, but the original game did have some
     special handling and adjustments for 40-columns TVs.
 - `ROGUE_DOS_CLOCK`: Use DOS interrupts to access the RTC clock and other time-related events,
-    as the original game did. By default uses ISO C functions to for time.
+    as the original game did. By default uses ISO C functions for time.
 - `ROGUE_DOS_DRIVE`: If set, uses a DOS interrupt to find out the current drive letter.
     As all DOS interrupts are dummy stubs in this modern port, it will result in drive `A:`.
     Mostly used for cosmetic purposes, in the _"Fake DOS"_ in-game feature launched with `F10`.
@@ -128,10 +130,27 @@ Only in code, most for internal use and to control the emulated hardware reporte
 - `ROGUE_NOGOOD`: If set, do not circumvent the original anti-piracy, copy-protection routines.
     As this heavily relies on DOS interrupts, assembly code and other direct hardware access
     only available in 1985, this will result in the game acting as if it was illegally copied.
+- `ROGUE_RELEASE`: Just sets the additional `CFLAGS` `-s` and `-O2`,
+    otherwise it sets `-Og` and `-g3`. No in-game effect.
+- `ROGUE_DEBUG`: Enable some in-game debugging messages.
+    It disrupts the `curses` display, so the game become somewhat unplayable.
+- `ROGUE_DEMO`: Sets `DEMO` for the original Demo mode.
+
+**All** original compile-time environment vars and `-D`efines used as `#ifdef`s in code are preserved!
+However, some of them were already non-functional and only partially implemented in the original code.
+They are still _untested_ and for now _unsupported_ in this modern port, so many will not work.
+Highlights include: _(not a comprehensive list)_
+- `DEMO`: Demonstration mode, with gameplay restrictions.
+- `DEBUG`: Debug mode, for testing.
+- `WIZARD`: "God" mode, with extra commands.
+- `INTL`: International release, with different credits.
+- `ME`: Be the author!
+- `LUXURY`: In 1985, this meant a UNIX machine with an extended C library.
+- `MINROG`: Set by default in the original `Makefile`, enables the winning message.
 
 #### Run-time settings:
 
-Files: all preserved from the original! By default all read from and created at the current currectory.
+Files: all preserved from the original! By default all read from and created at the current directory.
 - `rogue.opt`: Game options, such as the default player and fruit name, current drive letter, etc.
 - `rogue.scr`: High scores, fully working! Path and name can be set in the options above.
 - `rogue.sav`: Save state file. Saving and restoring is currently not implemented.
@@ -146,7 +165,16 @@ Command-line options, all preserved from the original:
 Note: options are all case-_insensitive_, and can use either `-` or `/`, as the original.
 So `-r`, `-R`, `/r` and `/R` are all equivalent.
 
-
-Enviroment variables:
+Environment variables:
 - `ROGUE_PIC`: full path to the splash image, by default `rogue.pic` in the _current_ directory.
      Only displayed if using `rogue-sdl` under an SDL2-capable environment such as X11.
+
+---
+
+### Credits
+
+**Original Game (1985):** A.I. Design (Michael Toy, Glenn Wichman, Ken Arnold).
+
+**Modern PC Port:** Roguelike Community.
+
+**Diablo Edition Developer:** James Kirk ([@cptjamestiberiouskirk](https://github.com/cptjamestiberiouskirk))

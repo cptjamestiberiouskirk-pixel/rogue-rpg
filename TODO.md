@@ -1,5 +1,6 @@
 TODO
 ===============================================================================
-- In launchers, only change to sources directory if `$gamecmd` in `./src`
-- Create a `Makefile` outside `/src`, to allow `make` in project root
-- Consider embedding `rogue.pic` data as a `.c` source file: `xxd rogue.pic > rogue_pic.c`
+- [ ] **Save Game Compatibility:** Update `save.c` to serialize/deserialize the new `ClassType` and `MonsterAffix` structs.
+- [ ] **Balancing:** Tune drop rates for Legendary items and Boss spawn frequency.
+- [ ] **More Affixes:** Add "Explosive" and "Frozen" monster varieties.
+- [ ] **Shopkeeper:** Implement a gold-sink mechanic to gamble for items.
