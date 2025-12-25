@@ -2521,11 +2521,22 @@ getinfo(str,size)
 			ch = '\n';
 		}
 #else
-		//@ Blocking getch() is fine, as SIG2() is not called anyway
-		while ((ch = wgetch(stdscr)) == ERR);
-		if (ch > KEY_MIN)
+#ifdef ROGUE_GRAPHICS
+		/*
+		 * BUG FIX: Use graphics_read_key() when graphics are enabled
+		 * This prevents blocking on terminal input and allows SDL event processing
+		 */
+		if (graphics_enabled) {
+			ch = graphics_read_key();
+		} else
+#endif
 		{
-			ch = KEY_MASK & ch;
+			//@ Blocking getch() is fine in ASCII mode, as SIG2() is not called anyway
+			while ((ch = wgetch(stdscr)) == ERR);
+			if (ch > KEY_MIN)
+			{
+				ch = KEY_MASK & ch;
+			}
 		}
 #endif
 		switch(ch)
