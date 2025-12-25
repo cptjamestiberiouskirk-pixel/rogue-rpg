@@ -17,13 +17,33 @@ SDL_Texture *tileset_texture = NULL;
 SDL_Renderer *tileset_renderer = NULL;
 
 /*
- * load_tileset: Load tilemap.png and create SDL texture
+ * load_tileset: Create tileset texture from procedural tiles
  * Returns: 0 on success, -1 on failure
+ * 
+ * Note: Since standard image libraries are not reliably available,
+ * this implementation creates tile textures procedurally from simple
+ * colored rectangles. In production, tiles would be loaded from
+ * tilemap.bmp via SDL_LoadBMP(filename).
  */
 int
 load_tileset(SDL_Renderer *renderer, const char *filename)
 {
 	SDL_Surface *surface;
+	Uint32 *pixels;
+	int pitch_pixels;
+	int i, j, tile_idx;
+	SDL_Color tile_colors[] = {
+		{100, 100, 100, 255},  /* Tile 0: gray floor */
+		{150, 150, 150, 255},  /* Tile 1: light gray wall */
+		{200, 100, 100, 255},  /* Tile 2: red player */
+		{100, 150, 100, 255},  /* Tile 3: green plant */
+		{200, 200, 100, 255},  /* Tile 4: yellow item */
+		{100, 100, 200, 255},  /* Tile 5: blue door */
+		{0, 0, 0, 255},        /* Tile 6: black empty */
+		{255, 255, 255, 255},  /* Tile 7: white border */
+		{50, 50, 50, 255}      /* Tile 8: dark wall */
+	};
+	int num_colors = sizeof(tile_colors) / sizeof(tile_colors[0]);
 
 	if (!renderer) {
 		fprintf(stderr, "Graphics renderer not initialized\n");
@@ -32,12 +52,51 @@ load_tileset(SDL_Renderer *renderer, const char *filename)
 
 	tileset_renderer = renderer;
 
-	/* Load using SDL_LoadBMP (no external image library required) */
+	/* Try loading from file first */
 	surface = SDL_LoadBMP(filename);
+	
+	if (surface) {
+		tileset_texture = SDL_CreateTextureFromSurface(renderer, surface);
+		SDL_FreeSurface(surface);
+		if (tileset_texture) {
+			return 0;
+		}
+	}
+
+	/* Fallback: Create procedural tileset (12x11 grid of 16x16 tiles) */
+	fprintf(stderr, "Creating procedural tileset (file '%s' not found)\n", filename);
+	
+	surface = SDL_CreateRGBSurface(0, 
+		TILEMAP_COLS * TILE_WIDTH + (TILEMAP_COLS - 1),
+		TILEMAP_ROWS * TILE_HEIGHT + (TILEMAP_ROWS - 1),
+		32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
 
 	if (!surface) {
-		fprintf(stderr, "Failed to load tileset: %s\n", SDL_GetError());
+		fprintf(stderr, "Failed to create tile surface: %s\n", SDL_GetError());
 		return -1;
+	}
+
+	pixels = (Uint32 *)surface->pixels;
+	pitch_pixels = surface->pitch / sizeof(Uint32);
+
+	/* Fill surface with tiles */
+	for (i = 0; i < TILEMAP_ROWS; i++) {
+		for (j = 0; j < TILEMAP_COLS; j++) {
+			int base_x = j * (TILE_WIDTH + 1);
+			int base_y = i * (TILE_HEIGHT + 1);
+			tile_idx = (i * TILEMAP_COLS + j) % num_colors;
+			SDL_Color color = tile_colors[tile_idx];
+			Uint32 pixel = SDL_MapRGB(surface->format, color.r, color.g, color.b);
+
+			/* Draw tile rectangle */
+			for (int y = 0; y < TILE_HEIGHT; y++) {
+				for (int x = 0; x < TILE_WIDTH; x++) {
+					if (base_x + x < surface->w && base_y + y < surface->h) {
+						pixels[(base_y + y) * pitch_pixels + (base_x + x)] = pixel;
+					}
+				}
+			}
+		}
 	}
 
 	tileset_texture = SDL_CreateTextureFromSurface(renderer, surface);
